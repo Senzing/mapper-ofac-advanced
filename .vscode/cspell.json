@@ -1,0 +1,40 @@
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en",
+  // words - list of words to be always considered correct
+  "words": [
+    "analysing",
+    "argparser",
+    "CCLA",
+    "CODEOWNER",
+    "EFEAT",
+    "ICLA",
+    "INPUTFILE",
+    "isort",
+    "kwargs",
+    "LOGFILE",
+    "MMSI",
+    "mypy",
+    "ofac",
+    "OUTPUTFILE",
+    "pylint",
+    "pytest",
+    "Senzing",
+    "setuptools",
+    "shellcheck",
+    "stackoverflow",
+    "sublists",
+    "subrecord",
+    "venv",
+    "WATCHLIST"
+  ],
+  "ignorePaths": [
+    ".git/**",
+    ".mypy_cache/**",
+    "development-requirements.txt",
+    "documentation-requirements.txt",
+    "ofac_codes.csv"
+  ]
+}
