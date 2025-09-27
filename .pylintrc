@@ -24,6 +24,9 @@ disable=
     used-before-assignment,
     useless-return,
     using-constant-test,
+    use-maxsplit-arg,
+max-module-lines=1300
+max-attributes=25
 good-names=
     template-python
 ignore=
