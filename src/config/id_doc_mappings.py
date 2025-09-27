@@ -106,3 +106,4 @@ ID_DOC_MAPPINGS = {
     2772: {'name': 'Russian State Individual Business Registration Number Pattern (OGRNIP)', 'group': 'OTHER IDENTIFIERS (Specialized/Unknown codes)', 'instructions': [('OTHER_ID_TYPE', 'OGRNIP'), ('OTHER_ID_NUMBER', None), ('OTHER_ID_COUNTRY', 'RU')]},
     2790: {'name': 'Global Intermediary Identification Number', 'group': 'OTHER IDENTIFIERS (Specialized/Unknown codes)', 'instructions': [('OTHER_ID_TYPE', 'GIIN'), ('OTHER_ID_NUMBER', None), ('OTHER_ID_COUNTRY', None)]},
 }
+

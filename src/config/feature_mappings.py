@@ -73,3 +73,4 @@ FEATURE_MAPPINGS = {
     1007: {'name': 'Digital Currency Address - ARB', 'section': 'CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)', 'instructions': [('OTHER_ID_TYPE', 'CRYPTO_ARB'), ('OTHER_ID_NUMBER', None)]},
     1008: {'name': 'Digital Currency Address - BSC', 'section': 'CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)', 'instructions': [('OTHER_ID_TYPE', 'CRYPTO_BSC'), ('OTHER_ID_NUMBER', None)]},
 }
+
