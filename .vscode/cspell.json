@@ -35,6 +35,7 @@
     "isort",
     "jquery",
     "jsmath",
+    "kernelsam",
     "kwargs",
     "levelname",
     "LOCODE",
