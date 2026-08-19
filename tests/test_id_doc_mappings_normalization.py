@@ -64,7 +64,7 @@ def test_registration_family_collapses_to_registration_number():
         1594,
     ):
         instr = _instr(id_)
-        assert instr.get("NATIONAL_ID_TYPE") == "registrationNumber", id_
+        assert instr.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER", id_
         assert "NATIONAL_ID_NUMBER" in instr, id_
 
 
@@ -73,34 +73,38 @@ def test_ogrnip_carries_ogrn_code():
     # registrationNumber, so it is TYPE=registrationNumber + SUBTYPE=ogrnCode (NATIONAL_ID_SUBTYPE,
     # Senzing GDEV-4439) rather than a distinct top-level type that would fragment the namespace.
     instr = _instr(2772)
-    assert instr.get("NATIONAL_ID_TYPE") == "registrationNumber"
-    assert instr.get("NATIONAL_ID_SUBTYPE") == "ogrnCode"
+    assert instr.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER"
+    assert instr.get("NATIONAL_ID_SUBTYPE") == "OGRN"
 
 
 def test_feature_class_unified_no_other_id_registration_leftovers():
     for id_, entry in ID_DOC_MAPPINGS.items():
         instr = dict(entry["instructions"])
-        if instr.get("OTHER_ID_TYPE") == "registrationNumber":
+        if instr.get("OTHER_ID_TYPE") == "REGISTRATION_NUMBER":
             raise AssertionError(f"{id_} left registrationNumber on OTHER_ID")
 
 
-def test_person_schemes_use_openSanctions_raw_labels():
-    expected = {
-        1600: "C.U.R.P.",
-        1574: "D.N.I.",
-        1570: "Cedula No.",
-        1625: "C.U.I.P.",
-        1854: "C.U.I.",
-        1579: "N.I.E.",
-        1634: "CNP (Personal Numerical Code)",
-        1645: "Turkish Identification Number",
-        1740: "UAE Identification",
-        1739: "Citizen's Card Number",
-        1492: "Tazkira National ID Card",
-        1482: "Numero de Identidad",
+def test_person_schemes_canonical_uppercase():
+    # Named person/national schemes carry the UPPER-CASE canonical token (crosswalk normalization:
+    # upper-case, trim punctuation) so every source shares one exclusivity namespace per scheme.
+    named = {
+        1600: "CURP",
+        1574: "DNI",
+        1570: "CEDULA",
+        1625: "CUIP",
+        1854: "CUI",
+        1579: "NIE",
+        1634: "CNP",
+        1492: "TAZKIRA",
+        1645: "TCKN",   # Turkish Identification Number -- a named scheme, not generic
+        1740: "EID",    # UAE Identification (Emirates ID)
+        1739: "CCN",    # Citizen's Card Number
     }
-    for id_, typ in expected.items():
+    for id_, typ in named.items():
         assert _instr(id_).get("NATIONAL_ID_TYPE") == typ, id_
+    # Only a TRULY generic label (Numero de Identidad = "identity number" in Spanish, no distinct
+    # scheme) carries NO type -- the NATIONAL_ID feature + country scope it and a blank type bridges.
+    assert "NATIONAL_ID_TYPE" not in _instr(1482)
 
 
 def test_generic_national_id_labels_stay_untyped():
@@ -159,14 +163,14 @@ def test_tax_schemes_route_to_tax_id_blank_type():
 def test_cuit_is_national_id_not_tax():
     # CUIT is Argentina's universal identifier (used well beyond tax); OpenSanctions AND Sayari both
     # classify it NATIONAL_ID, not TAX_ID.
-    assert _instr(1595).get("NATIONAL_ID_TYPE") == "C.U.I.T."
+    assert _instr(1595).get("NATIONAL_ID_TYPE") == "CUIT"
 
 
 def test_vat_routes_to_tax_id_vatcode():
     # VAT is a tax scheme -> TAX_ID with a DISTINCT type (vatCode) that keeps it out of the
     # national-tax-number namespace (both live on TAX_ID, different TAX_ID_TYPE).
     instr = _instr(1589)
-    assert instr.get("TAX_ID_TYPE") == "vatCode"
+    assert instr.get("TAX_ID_TYPE") == "VAT"
     assert "TAX_ID_NUMBER" in instr
     assert "NATIONAL_ID_NUMBER" not in instr
 

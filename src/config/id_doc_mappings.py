@@ -31,7 +31,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Company Number',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -40,7 +40,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Public Registration Number',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -65,7 +65,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Numero de Identidad',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'Numero de Identidad'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -83,7 +82,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Tazkira National ID Card',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'Tazkira National ID Card'),
+            ('NATIONAL_ID_TYPE', 'TAZKIRA'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'AF'),
         ],
@@ -108,7 +107,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Cedula No.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'Cedula No.'),
+            ('NATIONAL_ID_TYPE', 'CEDULA'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -140,7 +139,7 @@ ID_DOC_MAPPINGS = {
         "name": 'D.N.I.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'D.N.I.'),
+            ('NATIONAL_ID_TYPE', 'DNI'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -181,7 +180,7 @@ ID_DOC_MAPPINGS = {
         "name": 'N.I.E.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'N.I.E.'),
+            ('NATIONAL_ID_TYPE', 'NIE'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -198,7 +197,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Business Registration Document #',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -223,7 +222,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Registration ID',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -247,7 +246,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Registered Charity No.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -256,7 +255,7 @@ ID_DOC_MAPPINGS = {
         "name": 'V.A.T. Number',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('TAX_ID_TYPE', 'vatCode'),
+            ('TAX_ID_TYPE', 'VAT'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -299,7 +298,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.I.N.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -308,7 +307,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.U.I.T.',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'C.U.I.T.'),
+            ('NATIONAL_ID_TYPE', 'CUIT'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -342,7 +341,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.U.R.P.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'C.U.R.P.'),
+            ('NATIONAL_ID_TYPE', 'CURP'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'MX'),
         ],
@@ -359,7 +358,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.R. No.',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -368,7 +367,7 @@ ID_DOC_MAPPINGS = {
         "name": 'UK Company Number',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'GB'),
         ],
@@ -444,7 +443,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Dubai Chamber of Commerce Membership No.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'AE'),
         ],
@@ -462,7 +461,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Commercial Registry Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -471,7 +470,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Certificate of Incorporation Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -507,7 +506,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.U.I.P.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'C.U.I.P.'),
+            ('NATIONAL_ID_TYPE', 'CUIP'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -541,7 +540,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Registration Certificate Number (Dubai)',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'AE'),
         ],
@@ -559,7 +558,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Matricula Mercantil No',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -585,7 +584,7 @@ ID_DOC_MAPPINGS = {
         "name": 'CNP (Personal Numerical Code)',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'CNP (Personal Numerical Code)'),
+            ('NATIONAL_ID_TYPE', 'CNP'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -627,7 +626,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Romanian C.R.',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'RO'),
         ],
@@ -636,7 +635,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Folio Mercantil No.',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -645,7 +644,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Istanbul Chamber of Comm. No.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'TR'),
         ],
@@ -654,7 +653,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Turkish Identification Number',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'Turkish Identification Number'),
+            ('NATIONAL_ID_TYPE', 'TCKN'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'TR'),
         ],
@@ -715,7 +714,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Enterprise Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -724,7 +723,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Organization Code',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -733,7 +732,7 @@ ID_DOC_MAPPINGS = {
         "name": "Citizen's Card Number",
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', "Citizen's Card Number"),
+            ('NATIONAL_ID_TYPE', 'CCN'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -742,7 +741,7 @@ ID_DOC_MAPPINGS = {
         "name": 'UAE Identification',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'UAE Identification'),
+            ('NATIONAL_ID_TYPE', 'EID'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'AE'),
         ],
@@ -751,7 +750,7 @@ ID_DOC_MAPPINGS = {
         "name": 'United Social Credit Code Certificate (USCCC)',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'CN'),
         ],
@@ -760,7 +759,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Chamber of Commerce Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -776,7 +775,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Business Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -794,7 +793,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Business Registration Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -803,7 +802,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Registration Number',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -830,7 +829,7 @@ ID_DOC_MAPPINGS = {
         "name": 'C.U.I.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'C.U.I.'),
+            ('NATIONAL_ID_TYPE', 'CUI'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -848,7 +847,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Unified Social Credit Code (USCC)',
         "group": 'BUSINESS/ORGANIZATION REGISTRATIONS (National-level)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'CN'),
         ],
@@ -857,7 +856,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Central Registration System Number',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -866,7 +865,7 @@ ID_DOC_MAPPINGS = {
         "name": 'Economic Register Number (CBLS)',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', None),
         ],
@@ -902,8 +901,8 @@ ID_DOC_MAPPINGS = {
         "name": 'Russian State Individual Business Registration Number Pattern (OGRNIP)',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'registrationNumber'),
-            ('NATIONAL_ID_SUBTYPE', 'ogrnCode'),
+            ('NATIONAL_ID_TYPE', 'REGISTRATION_NUMBER'),
+            ('NATIONAL_ID_SUBTYPE', 'OGRN'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'RU'),
         ],
