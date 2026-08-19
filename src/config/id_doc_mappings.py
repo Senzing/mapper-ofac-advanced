@@ -1,8 +1,9 @@
 # FtM-canonical identifier-type normalization aligned to the OpenSanctions `doc_types` crosswalk
 # (cross-checked against the reviewed Senzing mapper-sayari-spark classifications). Business
-# registration family -> NATIONAL_ID/registrationNumber (OGRNIP -> ogrnCode); tax ids -> TAX_ID with
-# TAX_ID_TYPE=taxNumber (VAT -> vatCode) -- requires TAX_ID_TYPE, in the 4.4 default config and in the
-# sz_configtool commands shipped with this mapper; LEI -> dedicated LEI feature; specific person
+# registration family -> NATIONAL_ID/registrationNumber; OGRNIP -> registrationNumber +
+# NATIONAL_ID_SUBTYPE=ogrnCode (one of several RU registration registries; Senzing GDEV-4439).
+# Tax ids -> TAX_ID: blank TAX_ID_TYPE for the generic number, own type for named schemes
+# (VAT -> vatCode). LEI -> dedicated LEI feature; specific person
 # schemes carry the OpenSanctions RAW label (e.g. "C.U.R.P.") so all sources share one exclusivity
 # namespace; generic "national id" labels are left UNTYPED (the NATIONAL_ID feature already declares
 # the class); voter/electoral and many-per-entity or reissued documents (licenses/permits/gazette/
@@ -48,7 +49,6 @@ ID_DOC_MAPPINGS = {
         "name": 'N.I.F.',
         "group": 'NATIONAL IDENTIFIERS (Country-issued unique per person/org)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -57,7 +57,6 @@ ID_DOC_MAPPINGS = {
         "name": 'RTN',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -133,7 +132,6 @@ ID_DOC_MAPPINGS = {
         "name": 'R.F.C.',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -151,7 +149,6 @@ ID_DOC_MAPPINGS = {
         "name": 'NIT #',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -160,7 +157,6 @@ ID_DOC_MAPPINGS = {
         "name": 'US FEIN',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', 'US'),
         ],
@@ -177,7 +173,6 @@ ID_DOC_MAPPINGS = {
         "name": 'RUC #',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -195,7 +190,6 @@ ID_DOC_MAPPINGS = {
         "name": 'C.I.F.',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -213,7 +207,6 @@ ID_DOC_MAPPINGS = {
         "name": 'RIF #',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -289,7 +282,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Italian Fiscal Code',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', 'IT'),
         ],
@@ -325,7 +317,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Tax ID No.',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -421,7 +412,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Paraguayan tax identification number',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', 'PY'),
         ],
@@ -438,7 +428,6 @@ ID_DOC_MAPPINGS = {
         "name": 'RFC',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -588,7 +577,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Numero Unico de Identificacao Tributaria (NUIT)',
         "group": 'ACCOUNT/FINANCIAL IDENTIFIERS',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -622,7 +610,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Fiscal Code',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', None),
         ],
@@ -676,7 +663,6 @@ ID_DOC_MAPPINGS = {
         "name": 'Romanian Tax Registration',
         "group": 'TAX IDENTIFIERS (Classification per Spec Decision Tree)',
         "instructions": [
-            ('TAX_ID_TYPE', 'taxNumber'),
             ('TAX_ID_NUMBER', None),
             ('TAX_ID_COUNTRY', 'RO'),
         ],
@@ -916,7 +902,8 @@ ID_DOC_MAPPINGS = {
         "name": 'Russian State Individual Business Registration Number Pattern (OGRNIP)',
         "group": 'OTHER IDENTIFIERS (Specialized/Unknown codes)',
         "instructions": [
-            ('NATIONAL_ID_TYPE', 'ogrnCode'),
+            ('NATIONAL_ID_TYPE', 'registrationNumber'),
+            ('NATIONAL_ID_SUBTYPE', 'ogrnCode'),
             ('NATIONAL_ID_NUMBER', None),
             ('NATIONAL_ID_COUNTRY', 'RU'),
         ],

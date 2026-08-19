@@ -69,9 +69,12 @@ def test_registration_family_collapses_to_registration_number():
 
 
 def test_ogrnip_carries_ogrn_code():
-    # OGRNIP is a distinct Russian scheme; OpenSanctions us_ofac types it ogrnCode (label-driven, NOT a
-    # value-based carve-out) -> we align.
-    assert _instr(2772).get("NATIONAL_ID_TYPE") == "ogrnCode"
+    # OGRNIP is one of several RU registration registries and a source may only know the broad
+    # registrationNumber, so it is TYPE=registrationNumber + SUBTYPE=ogrnCode (NATIONAL_ID_SUBTYPE,
+    # Senzing GDEV-4439) rather than a distinct top-level type that would fragment the namespace.
+    instr = _instr(2772)
+    assert instr.get("NATIONAL_ID_TYPE") == "registrationNumber"
+    assert instr.get("NATIONAL_ID_SUBTYPE") == "ogrnCode"
 
 
 def test_feature_class_unified_no_other_id_registration_leftovers():
@@ -126,10 +129,10 @@ def test_legal_entity_numbers_route_to_lei_feature():
         assert "NATIONAL_ID_NUMBER" not in instr, id_
 
 
-def test_tax_schemes_route_to_tax_id_taxnumber():
-    # National tax numbers -> TAX_ID with TAX_ID_TYPE=taxNumber (the OpenSanctions value). The Senzing
-    # Entity Specification puts EIN/TIN/VAT on TAX_ID (and marks "EIN as NATIONAL_ID" as wrong).
-    # TAX_ID_TYPE ships in the 4.4 default config + this mapper's sz_configtool commands.
+def test_tax_schemes_route_to_tax_id_blank_type():
+    # Generic national tax numbers -> TAX_ID with a BLANK TAX_ID_TYPE (the un-scheme-specific
+    # default), so a bare tax number bridges cross-source instead of conflicting on a token. Named
+    # tax schemes (e.g. VAT -> vatCode) keep their own type. Entity Spec puts EIN/TIN/VAT on TAX_ID.
     expected = (
         1573,
         1612,
@@ -149,7 +152,7 @@ def test_tax_schemes_route_to_tax_id_taxnumber():
     )
     for id_ in expected:
         instr = _instr(id_)
-        assert instr.get("TAX_ID_TYPE") == "taxNumber", id_
+        assert "TAX_ID_TYPE" not in instr, id_
         assert "TAX_ID_NUMBER" in instr, id_
 
 
