@@ -121,7 +121,11 @@ ID_DOC_MAPPINGS = {
     1581: {
         "name": "Business Registration Document #",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "BUS_REG"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", None)],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
     },
     1582: {
         "name": "RIF #",
@@ -140,7 +144,11 @@ ID_DOC_MAPPINGS = {
     1585: {
         "name": "Registration ID",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "REG_ID"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", None)],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
     },
     1586: {
         "name": "LE Number",
@@ -232,13 +240,17 @@ ID_DOC_MAPPINGS = {
     1602: {
         "name": "C.R. No.",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "CR"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", None)],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
     },
     1603: {
         "name": "UK Company Number",
         "group": "NATIONAL IDENTIFIERS (Country-issued unique per person/org)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "UK_COMPANY"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", "UK"),
         ],
@@ -301,7 +313,7 @@ ID_DOC_MAPPINGS = {
         "name": "Commercial Registry Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "COMMERCIAL_REG"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -310,7 +322,7 @@ ID_DOC_MAPPINGS = {
         "name": "Certificate of Incorporation Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "INCORPORATION"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -408,7 +420,7 @@ ID_DOC_MAPPINGS = {
         "name": "Romanian C.R.",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "ROMANIAN_CR"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", "RO"),
         ],
@@ -416,7 +428,11 @@ ID_DOC_MAPPINGS = {
     1643: {
         "name": "Folio Mercantil No.",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "FOLIO"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", None)],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
     },
     1644: {
         "name": "Istanbul Chamber of Comm. No.",
@@ -466,7 +482,7 @@ ID_DOC_MAPPINGS = {
         "name": "Enterprise Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "ENTERPRISE"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -474,7 +490,11 @@ ID_DOC_MAPPINGS = {
     1721: {
         "name": "Organization Code",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "ORG_CODE"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", None)],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
     },
     1739: {
         "name": "Citizen's Card Number",
@@ -493,13 +513,17 @@ ID_DOC_MAPPINGS = {
     1747: {
         "name": "United Social Credit Code Certificate (USCCC)",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "USCCC"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", "CN")],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", "CN"),
+        ],
     },
     1751: {
         "name": "Chamber of Commerce Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "CHAMBER_COMMERCE"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -508,7 +532,7 @@ ID_DOC_MAPPINGS = {
         "name": "Legal Entity Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "LEGAL_ENTITY"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -517,7 +541,7 @@ ID_DOC_MAPPINGS = {
         "name": "Business Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "BUSINESS_NUMBER"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -531,7 +555,7 @@ ID_DOC_MAPPINGS = {
         "name": "Business Registration Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "BUS_REG_NUM"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -540,7 +564,7 @@ ID_DOC_MAPPINGS = {
         "name": "Registration Number",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "REG_NUMBER"),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", None),
         ],
@@ -568,7 +592,11 @@ ID_DOC_MAPPINGS = {
     2001: {
         "name": "Unified Social Credit Code (USCC)",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
-        "instructions": [("NATIONAL_ID_TYPE", "USCC"), ("NATIONAL_ID_NUMBER", None), ("NATIONAL_ID_COUNTRY", "CN")],
+        "instructions": [
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", "CN"),
+        ],
     },
     2067: {
         "name": "Central Registration System Number",
