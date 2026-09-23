@@ -1,0 +1,20 @@
+# Senzing configuration updates for the OFAC advanced mapper.
+#
+# Apply with:  sz_configtool -f src/ofac_config_updates.gtc
+#
+# Adds TAX_ID_TYPE so tax identifiers can be typed on the TAX_ID feature (taxNumber, vatCode, ...),
+# mirroring the ID_TYPE element/attribute that NATIONAL_ID already has. Without it, TAX_ID_TYPE is
+# dropped at load and distinct tax schemes collide in the single untyped TAX_ID namespace.
+#
+# Senzing 4.4's default config ships TAX_ID_TYPE; these commands are for engines whose config predates
+# that (e.g. 4.4.0-26224, whose template has NATIONAL_ID ID_TYPE scored but nothing on TAX_ID).
+#
+# Three steps mirror NATIONAL_ID: (1) bind the ID_TYPE element to the TAX_ID feature (stores/displays),
+# (2) add ID_TYPE to the TAX_ID comparison call -- this is what makes the type actually SCORED, not just
+# stored, (3) map the TAX_ID_TYPE attribute. execOrder values match the 4.4.0-26224 template. `save`
+# persists the change.
+
+addElementToFeature       {"feature": "TAX_ID", "element": "ID_TYPE", "derived": "No", "display": 1, "execOrder": 7}
+addComparisonCallElement  {"feature": "TAX_ID", "element": "ID_TYPE", "execOrder": 3}
+addAttribute              {"attribute": "TAX_ID_TYPE", "class": "IDENTIFIER", "feature": "TAX_ID", "element": "ID_TYPE", "required": "Desired"}
+save
