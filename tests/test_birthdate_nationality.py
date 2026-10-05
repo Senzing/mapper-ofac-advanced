@@ -1,5 +1,8 @@
 """A birth date is a DatePeriod/Start/From; a nationality is a Location reference whose text is the country."""
 
+# The mapper's private feature helpers are the unit under test here, so the tests call them directly.
+# pylint: disable=protected-access
+
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -36,19 +39,15 @@ def _period(year, month=None, day=None):
 def test_birthdate_from_date_period():
     """A full date, a year and month, and a year alone."""
     mapper = _mapper()
-    assert (
-        mapper._extract_feature_date(_feature(_period(1948, 12, 10))) == "1948-12-10"
-    )  # pylint: disable=protected-access
-    assert mapper._extract_feature_date(_feature(_period(1948, 12))) == "1948-12"  # pylint: disable=protected-access
-    assert mapper._extract_feature_date(_feature(_period(1948))) == "1948"  # pylint: disable=protected-access
+    assert mapper._extract_feature_date(_feature(_period(1948, 12, 10))) == "1948-12-10"
+    assert mapper._extract_feature_date(_feature(_period(1948, 12))) == "1948-12"
+    assert mapper._extract_feature_date(_feature(_period(1948))) == "1948"
 
 
 def test_birthdate_end_to_end_attribute():
     """The DATE_OF_BIRTH attribute is emitted for a Birthdate feature."""
     mapper = _mapper()
-    attrs = mapper._build_attribute_dict(
-        _feature(_period(1948, 12, 10)), [("DATE_OF_BIRTH", None)]
-    )  # pylint: disable=protected-access
+    attrs = mapper._build_attribute_dict(_feature(_period(1948, 12, 10)), [("DATE_OF_BIRTH", None)])
     assert attrs == {"DATE_OF_BIRTH": "1948-12-10"}
 
 
@@ -60,5 +59,5 @@ def test_nationality_from_location_text():
     )
     mapper = _mapper({"186082": location})
     feature = _feature('<VersionLocation LocationID="186082"/>')
-    attrs = mapper._build_attribute_dict(feature, [("NATIONALITY", None)])  # pylint: disable=protected-access
+    attrs = mapper._build_attribute_dict(feature, [("NATIONALITY", None)])
     assert attrs == {"NATIONALITY": "Egypt"}
