@@ -6,6 +6,7 @@
     "applehelp",
     "autodoc",
     "autodocsumm",
+    "Azul",
     "bugtracker",
     "CAATSA",
     "Cartilla",
@@ -70,7 +71,8 @@
     "USCC",
     "USCCC",
     "venv",
-    "virtualenv"
+    "virtualenv",
+    "Zumar"
   ],
   "ignorePaths": [
     ".git/**",
