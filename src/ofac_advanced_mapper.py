@@ -572,7 +572,16 @@ class StrictOFACTransformer:
                         feature_obj[attr] = doc_number
 
                 if feature_obj:
-                    record["FEATURES"].append(feature_obj)
+                    # A doc type whose group is flagged PAYLOAD is not an entity identifier (e.g. a
+                    # name telegraph-encoding or a shared publication reference) -> preserve it as a
+                    # top-level payload attribute, never as a resolvable IDENTIFIER feature.
+                    if "PAYLOAD" in str(mapping.get("group", "")).upper():
+                        for key, value in feature_obj.items():
+                            if value in (None, ""):
+                                continue
+                            record.setdefault(key, value)
+                    else:
+                        record["FEATURES"].append(feature_obj)
 
     def _add_relationships(self, record: Dict, profile: ET.Element) -> None:
         profile_id = profile.get("ID")
