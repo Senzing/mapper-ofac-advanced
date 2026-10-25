@@ -352,6 +352,7 @@ class StrictOFACTransformer:
         )
 
         self._add_relationships(record, profile)
+        self._join_payload_values(record)
         self._add_payload_attributes(record, profile, max_reliability)
 
         return record
@@ -469,15 +470,10 @@ class StrictOFACTransformer:
                 # One feature per value: a date spanning several years is one date feature per year.
                 record["FEATURES"].extend(values_list)
             else:
-                values = self._merge_attribute_dicts(values_list)
-                for key, value in values.items():
-                    if value in (None, ""):
-                        continue
-                    if key not in record:
-                        record[key] = value
-                    elif record[key] != value:
-                        # In the unlikely case of conflicting payload values, prefer first.
-                        continue
+                # Every distinct value is kept (a party may repeat a payload feature with different values).
+                for values in values_list:
+                    for key, value in values.items():
+                        self._append_payload_value(record, key, value)
 
         return max_reliability
 
@@ -493,18 +489,6 @@ class StrictOFACTransformer:
             return [values] if values else []
         built = (self._build_attribute_dict(feature, instructions, date_value=date) for date in dates)
         return [values for values in built if values]
-
-    @staticmethod
-    def _merge_attribute_dicts(values_list: List[Dict[str, object]]) -> Dict[str, object]:
-        """Several per-year dicts as one payload dict: each key's distinct values joined with "; " in order."""
-        if len(values_list) == 1:
-            return values_list[0]
-        merged: Dict[str, List[object]] = {}
-        for values in values_list:
-            for key, value in values.items():
-                if value not in merged.setdefault(key, []):
-                    merged[key].append(value)
-        return {key: "; ".join(str(v) for v in vals) if len(vals) > 1 else vals[0] for key, vals in merged.items()}
 
     def _build_attribute_dict(
         self,
@@ -650,23 +634,29 @@ class StrictOFACTransformer:
 
     @staticmethod
     def _append_payload_value(record: Dict, key: str, value: object) -> None:
-        """Add a value to a top-level payload attribute, keeping every distinct value.
+        """Collect a value for a top-level payload attribute, keeping every distinct value.
 
-        A party can hold several documents of one payload type (e.g. two Government Gazette Numbers).
-        Values are joined with "; " in document order with exact duplicates dropped -- the same form as
-        the SANCTIONS_LIST / SANCTIONS_PROGRAMS payload attributes -- so no value is lost and the output
-        is deterministic.
+        A party can carry one payload attribute several times with different values (e.g. two Government
+        Gazette Numbers, or several "Secondary sanctions risk" features). Values are collected in document
+        order with exact repeats dropped; _join_payload_values then writes one value as itself and several
+        joined with "; " -- the same form as SANCTIONS_LIST / SANCTIONS_PROGRAMS. Collecting a list (rather
+        than splitting a joined string) keeps de-duplication exact even when a value itself contains "; ".
+        Empty values are ignored.
         """
         if value in (None, ""):
             return
-        text = str(value)
-        existing = record.get(key)
-        if existing in (None, ""):
-            record[key] = text
-            return
-        values = str(existing).split("; ")
-        if text not in values:
-            record[key] = f"{existing}; {text}"
+        values = record.setdefault(key, [])
+        if not isinstance(values, list):  # set by another step as a plain value: keep it first
+            values = record[key] = [values]
+        if value not in values:
+            values.append(value)
+
+    @staticmethod
+    def _join_payload_values(record: Dict) -> None:
+        """Finish the payload attributes _append_payload_value collected: one value as is, several "; "-joined."""
+        for key, value in record.items():
+            if key != "FEATURES" and isinstance(value, list):
+                record[key] = value[0] if len(value) == 1 else "; ".join(str(v) for v in value)
 
     def _add_relationships(self, record: Dict, profile: ET.Element) -> None:
         profile_id = profile.get("ID")

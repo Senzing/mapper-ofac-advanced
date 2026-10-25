@@ -98,6 +98,13 @@ joined with `"; "` in document order (the form `SANCTIONS_LIST` and `SANCTIONS_P
 2026-10-02 SDN file no party holds more than one such document (351 Government Gazette Numbers on 351 parties;
 12 Chinese Commercial Codes on 12 parties), so no value was being dropped there.
 
+The same rule (one helper, `_append_payload_value`) applies to payload *features* from
+`src/config/feature_mappings.py` (e.g. `SECONDARY_SANCTIONS_RISK`, `EO_13846_INFO`, `ORGANIZATION_TYPE`). Those
+previously kept only the first value: on the 2026-10-02 file 731 records carried 747 payload keys repeated with
+different values, and 991 distinct values were dropped. They are now kept, after the previously kept first
+value. Identical repeats stay one value; a single value is written unchanged. The longest joined value on that
+file is 373 characters (`EO_13846_INFO`).
+
 ## Cross-source alignment & validation
 
 - **Alignment** is realized when OFAC, OpenSanctions, and Sayari emit the same feature + type for the same

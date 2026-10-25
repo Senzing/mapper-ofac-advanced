@@ -84,6 +84,11 @@ per-type table is generated from `src/config/id_doc_mappings.py`
 (`python tests/test_docs_id_table.py`). In that file `"group"` is descriptive
 only; `"payload": True` routes a document type to a top-level payload attribute.
 
+Top-level payload attributes (from payload features or payload document types)
+keep every distinct value a party carries, in document order, joined with
+`"; "`; identical repeats collapse to one value and a single value is written
+unchanged.
+
 Dates: the feed states every date as a `DatePeriod`. The mapper emits it at the
 precision the bounds state: an exact date as `YYYY-MM-DD`, a whole month as
 `YYYY-MM`, a whole year (or two dates within one year) as `YYYY`. A period

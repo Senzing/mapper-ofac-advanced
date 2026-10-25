@@ -144,6 +144,8 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
       {_feature(10, 25, '<VersionLocation LocationID="600"/>', reliability=2)}
       {_feature(11, 21, _detail("INFO@CIMEX.EXAMPLE"))}
       {_feature(12, 504, '<VersionDetail DetailTypeID="1431" DetailReferenceID="92084"/>')}
+      {_feature(17, 504, _detail("Section 1(b)"))}
+      {_feature(18, 504, '<VersionDetail DetailTypeID="1431" DetailReferenceID="92084"/>')}
       {_feature(13, 99001, _detail("note-77"))}
       {_feature(14, 99002, "")}
       {_feature(15, 646, "<DatePart><Year>1991</Year><Month>11</Month><Day>19</Day></DatePart>")}
@@ -261,17 +263,45 @@ def test_payload_routing_ignores_group_label(monkeypatch, tmp_path):
     record = {"FEATURES": []}
     party = transformer.profile_elements["1001"]
     transformer._add_identity_documents(record, party)
+    transformer._join_payload_values(record)
     assert record["GOVERNMENT_GAZETTE_NUMBER"] == "GG-1; GG-2"
     assert {"PASSPORT_NUMBER": "P123", "PASSPORT_COUNTRY": "EG"} in record["FEATURES"]
     assert not any("GOVERNMENT_GAZETTE_NUMBER" in f for f in record["FEATURES"])
 
 
-def test_append_payload_value():
-    """Order-preserving, de-duplicated "; " join; empty values are ignored."""
-    record = {}
-    for value in ("A", "", None, "B", "A", "C"):
-        StrictOFACTransformer._append_payload_value(record, "K", value)
-    assert record == {"K": "A; B; C"}
+def _payload(*pairs, record=None):
+    """Run (key, value) pairs through the payload helper and finish the record."""
+    record = {"FEATURES": []} if record is None else record
+    for key, value in pairs:
+        StrictOFACTransformer._append_payload_value(record, key, value)
+    StrictOFACTransformer._join_payload_values(record)
+    return record
+
+
+def test_payload_multi_value_order_and_duplicates():
+    """Distinct values in document order, repeats collapsed, "; "-joined; the first value stays first."""
+    assert _payload(("K", "B"), ("K", "A"), ("K", "B"), ("K", "C"))["K"] == "B; A; C"
+
+
+def test_payload_single_value_untouched():
+    """A single value is written as is (same type, no delimiter); a repeated identical value stays single."""
+    assert _payload(("K", 7))["K"] == 7
+    assert _payload(("K", "Yes"), ("K", "Yes"))["K"] == "Yes"
+
+
+def test_payload_empty_values_ignored():
+    """None and "" add nothing: a key with only empty values is absent."""
+    assert _payload(("K", ""), ("K", None), ("J", "x")) == {"FEATURES": [], "J": "x"}
+
+
+def test_payload_value_containing_delimiter_is_exact():
+    """De-duplication compares whole values, so a value that itself contains "; " is not split."""
+    assert _payload(("K", "a; b"), ("K", "b"), ("K", "a; b"))["K"] == "a; b; b"
+
+
+def test_payload_keeps_existing_plain_value_first():
+    """A value set earlier as a plain attribute is kept first, then the new distinct values follow."""
+    assert _payload(("K", "new"), ("K", "old"), record={"FEATURES": [], "K": "old"})["K"] == "old; new"
 
 
 def test_main_writes_jsonl(tmp_path):
@@ -288,7 +318,7 @@ def test_organization_features_payload_and_fallbacks(records):
     org = records["2001"]
     assert _features_with(org, "ADDR_FULL") == [{"ADDR_FULL": "1 Main Street, Moscow"}]
     assert _features_with(org, "EMAIL_ADDRESS") == [{"EMAIL_ADDRESS": "info@cimex.example"}]
-    assert org["SECONDARY_SANCTIONS_RISK"] == "Yes"
+    assert org["SECONDARY_SANCTIONS_RISK"] == "Yes; Section 1(b)"  # repeated feature, distinct values kept
     assert _features_with(org, "OTHER_ID_TYPE") == [
         {"OTHER_ID_TYPE": "WEBSITE_NOTE", "OTHER_ID_NUMBER": "note-77"},
         {"OTHER_ID_TYPE": "ENTITY_CODE", "OTHER_ID_NUMBER": "E-1", "OTHER_ID_COUNTRY": "RU"},

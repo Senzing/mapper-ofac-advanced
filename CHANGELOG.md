@@ -27,6 +27,12 @@ Behavior changes to the emitted JSON; re-map and reload to pick them up.
 - Chinese Commercial Code and Government Gazette Number are top-level payload attributes, not identifiers;
   several values for one party are joined with `"; "`.
 
+### Fixed in Unreleased
+
+- Payload features repeated on one party with different values (e.g. `SECONDARY_SANCTIONS_RISK`,
+  `EO_13846_INFO`, `ORGANIZATION_TYPE`) kept only the first value. Every distinct value is now kept, in
+  document order, joined with `"; "` (731 records / 991 values on the 2026-10-02 SDN file).
+
 ### Added in Unreleased
 
 - `src/ofac_config_updates.gtc`: adds `TAX_ID_TYPE` to a Senzing config that predates it

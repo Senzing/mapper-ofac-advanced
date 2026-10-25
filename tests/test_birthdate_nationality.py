@@ -127,15 +127,17 @@ def test_date_period_open_ended():
 
 
 def test_multi_year_span_is_one_feature_per_year():
-    """_build_attribute_dicts emits one DATE_OF_BIRTH dict per year; payload dates merge into one value."""
+    """_build_attribute_dicts emits one DATE_OF_BIRTH dict per year; a payload date joins the years."""
     mapper = _mapper()
     feature = _feature(_span((1955, 1, 1), (1957, 12, 31)))
     dicts = mapper._build_attribute_dicts(feature, [("DATE_OF_BIRTH", None)])
     assert dicts == [{"DATE_OF_BIRTH": "1955"}, {"DATE_OF_BIRTH": "1956"}, {"DATE_OF_BIRTH": "1957"}]
-    merged = mapper._merge_attribute_dicts(
-        mapper._build_attribute_dicts(feature, [("AIRCRAFT_MANUFACTURE_DATE", None)])
-    )
-    assert merged == {"AIRCRAFT_MANUFACTURE_DATE": "1955; 1956; 1957"}
+    record = {"FEATURES": []}
+    for values in mapper._build_attribute_dicts(feature, [("AIRCRAFT_MANUFACTURE_DATE", None)]):
+        for key, value in values.items():
+            mapper._append_payload_value(record, key, value)
+    mapper._join_payload_values(record)
+    assert record["AIRCRAFT_MANUFACTURE_DATE"] == "1955; 1956; 1957"
 
 
 def test_day_without_month_is_dropped():
