@@ -60,7 +60,13 @@ tooling such as `black`, `flake8`, and `pytest` are listed in
    logs processing statistics on completion.
 
 4. Load the emitted JSONL into Senzing or feed it into downstream tooling as
-   needed.
+   needed. Senzing config prerequisite: the mapper emits `TAX_ID_TYPE`. Senzing
+   4.4's default config has it; for an engine whose config predates it, apply
+   `sz_configtool -f src/ofac_config_updates.gtc` before loading, or
+   `TAX_ID_TYPE` is dropped at load. The mapper also emits
+   `NATIONAL_ID_SUBTYPE` for OGRNIP; that attribute is not in the default
+   config yet and is ignored at load until it is registered (a future default
+   config, or add it to your own config).
 
 ## Configuration and Mapping
 
@@ -73,14 +79,27 @@ The transformer also builds lookups directly from the XML (country codes,
 relationship types, sanctions measures, etc.) to ensure the emitted JSON uses
 the latest values packaged with the feed.
 
+Identifier types are documented in `docs/id-type-normalization.md`, whose
+per-type table is generated from `src/config/id_doc_mappings.py`
+(`python tests/test_docs_id_table.py`). In that file `"group"` is descriptive
+only; `"payload": True` routes a document type to a top-level payload attribute.
+
+Dates: the feed states every date as a `DatePeriod`. The mapper emits it at the
+precision the bounds state: an exact date as `YYYY-MM-DD`, a whole month as
+`YYYY-MM`, a whole year (or two dates within one year) as `YYYY`. A period
+spanning several years ("1955 to 1957") emits each year as its own date feature
+(one `DATE_OF_BIRTH` / `REGISTRATION_DATE` per year; a top-level payload date
+such as `AIRCRAFT_MANUFACTURE_DATE` holds the years joined with `"; "`). A span
+longer than `MAX_DATE_SPAN_YEARS` (20) is treated as malformed: only its two
+bound years are emitted and a warning is logged.
+
 ## Development Notes
 
 - Formatting: the project targets Black's default style with a 120-character
   line length (`pyproject.toml`).
 - Linting: run `flake8 src` to surface warnings such as unused imports or
   variables.
-- Testing: no automated tests ship with this repository yet; add pytest suites
-  under `tests/` if you expand the functionality.
+- Testing: `python -m pytest --cov=src tests` (coverage target 80%).
 - Editing: adhere to ASCII unless a file already uses non-ASCII characters.
 
 ## Troubleshooting

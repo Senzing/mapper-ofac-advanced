@@ -1,21 +1,19 @@
-"""Invariants for the OpenSanctions-aligned id-type normalization of ID_DOC_MAPPINGS.
+"""Invariants for the identifier-type normalization of ID_DOC_MAPPINGS.
 
-Design (aligned to the OpenSanctions ``doc_types`` crosswalk = the canonical FtM vocabulary):
+What the mapping emits (these tests assert each point):
 
-* The business-registration family collapses to one canonical ``NATIONAL_ID_TYPE=registrationNumber``.
-* OGRNIP carries its distinct ``ogrnCode`` type (label-driven, matching OpenSanctions ``us_ofac``).
-* Specific person schemes carry the OpenSanctions RAW label (e.g. ``C.U.R.P.``) so OFAC and
-  OpenSanctions share one exclusivity namespace; generic "national id" labels stay UNTYPED (the
-  NATIONAL_ID feature already declares the class).
-* ALL tax identifiers live on NATIONAL_ID, each typed with its scheme label. ``TAX_ID`` is UNTYPED
-  in the config today (no ``TAX_ID_TYPE`` element) so it can hold only one primary scheme per country
-  and cannot distinguish schemes; NATIONAL_ID_TYPE works today and keeps each scheme namespaced.
-  VAT -> ``vatCode``. Nothing is emitted on the TAX_ID feature until ``TAX_ID_TYPE`` ships.
-* LEIs route to the self-typed global ``LEI_NUMBER`` feature.
-* Many-per-entity or reissued documents (licenses/permits/gazette/trademark/serial) stay on the
-  non-exclusive ``OTHER_ID`` feature (would otherwise manufacture F1ES denials).
-
-The repo shipped no tests, so this is the regression net for the normalization.
+* The business-registration family collapses to ``NATIONAL_ID_TYPE=REGISTRATION_NUMBER``.
+* OGRNIP is ``NATIONAL_ID_TYPE=REGISTRATION_NUMBER`` plus ``NATIONAL_ID_SUBTYPE=OGRN`` (the subtype is
+  not in the default Senzing config yet; see the note on entry 2772).
+* Named person schemes carry an upper-case scheme token (``CURP``, ``DNI``, ``CEDULA``, ...); generic
+  "national id" labels carry no ``NATIONAL_ID_TYPE`` (the feature already declares the class).
+* Tax identifiers live on ``TAX_ID``: a generic tax number has no ``TAX_ID_TYPE``; VAT is
+  ``TAX_ID_TYPE=VAT``. CUIT stays on ``NATIONAL_ID`` (``NATIONAL_ID_TYPE=CUIT``).
+* LEIs route to the ``LEI_NUMBER`` feature.
+* Many-per-entity or reissued documents (licenses, permits, trademarks, serials) stay on the
+  non-exclusive ``OTHER_ID`` feature.
+* Chinese Commercial Code and Government Gazette Number are marked ``"payload": True`` (not identifiers).
+* ``group`` is descriptive only and must agree with where the instructions route.
 """
 
 import importlib.util
@@ -29,7 +27,7 @@ ID_DOC_MAPPINGS = _mod.ID_DOC_MAPPINGS
 
 
 def _instr(id_):
-    return dict((a, v) for a, v in ID_DOC_MAPPINGS[id_]["instructions"])
+    return dict(ID_DOC_MAPPINGS[id_]["instructions"])
 
 
 def test_registration_family_collapses_to_registration_number():
@@ -70,7 +68,7 @@ def test_registration_family_collapses_to_registration_number():
 
 def test_ogrnip_carries_ogrn_code():
     # OGRNIP is one of several RU registration registries and a source may only know the broad
-    # registrationNumber, so it is TYPE=registrationNumber + SUBTYPE=ogrnCode (NATIONAL_ID_SUBTYPE,
+    # registration number, so it is TYPE=REGISTRATION_NUMBER + SUBTYPE=OGRN (NATIONAL_ID_SUBTYPE,
     # Senzing GDEV-4439) rather than a distinct top-level type that would fragment the namespace.
     instr = _instr(2772)
     assert instr.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER"
@@ -81,7 +79,7 @@ def test_feature_class_unified_no_other_id_registration_leftovers():
     for id_, entry in ID_DOC_MAPPINGS.items():
         instr = dict(entry["instructions"])
         if instr.get("OTHER_ID_TYPE") == "REGISTRATION_NUMBER":
-            raise AssertionError(f"{id_} left registrationNumber on OTHER_ID")
+            raise AssertionError(f"{id_} left REGISTRATION_NUMBER on OTHER_ID")
 
 
 def test_person_schemes_canonical_uppercase():
@@ -96,9 +94,9 @@ def test_person_schemes_canonical_uppercase():
         1579: "NIE",
         1634: "CNP",
         1492: "TAZKIRA",
-        1645: "TCKN",   # Turkish Identification Number -- a named scheme, not generic
-        1740: "EID",    # UAE Identification (Emirates ID)
-        1739: "CCN",    # Citizen's Card Number
+        1645: "TCKN",  # Turkish Identification Number -- a named scheme, not generic
+        1740: "EID",  # UAE Identification (Emirates ID)
+        1739: "CCN",  # Citizen's Card Number
     }
     for id_, typ in named.items():
         assert _instr(id_).get("NATIONAL_ID_TYPE") == typ, id_
@@ -136,7 +134,7 @@ def test_legal_entity_numbers_route_to_lei_feature():
 def test_tax_schemes_route_to_tax_id_blank_type():
     # Generic national tax numbers -> TAX_ID with a BLANK TAX_ID_TYPE (the un-scheme-specific
     # default), so a bare tax number bridges cross-source instead of conflicting on a token. Named
-    # tax schemes (e.g. VAT -> vatCode) keep their own type. Entity Spec puts EIN/TIN/VAT on TAX_ID.
+    # tax schemes (VAT -> TAX_ID_TYPE=VAT) keep their own type. Entity Spec puts EIN/TIN/VAT on TAX_ID.
     expected = (
         1573,
         1612,
@@ -166,8 +164,8 @@ def test_cuit_is_national_id_not_tax():
     assert _instr(1595).get("NATIONAL_ID_TYPE") == "CUIT"
 
 
-def test_vat_routes_to_tax_id_vatcode():
-    # VAT is a tax scheme -> TAX_ID with a DISTINCT type (vatCode) that keeps it out of the
+def test_vat_routes_to_tax_id_type_vat():
+    # VAT is a tax scheme -> TAX_ID with a DISTINCT type (VAT) that keeps it out of the
     # national-tax-number namespace (both live on TAX_ID, different TAX_ID_TYPE).
     instr = _instr(1589)
     assert instr.get("TAX_ID_TYPE") == "VAT"
@@ -194,14 +192,57 @@ def test_shared_or_many_per_entity_stay_non_exclusive_other_id():
 
 def test_non_identifier_codes_route_to_payload():
     # Chinese Commercial Code (a name telegraph-encoding, shared by same-named entities) and Government
-    # Gazette Number (a shared publication reference) are not entity identifiers -> PAYLOAD group, a
-    # single non-feature attribute, so the mapper preserves them off the FEATURES/IDENTIFIER path.
+    # Gazette Number (a shared publication reference) are not entity identifiers -> the explicit
+    # "payload" key, a single non-feature attribute, so the mapper keeps them off the FEATURES path.
     for id_, attr in ((1508, "CHINESE_COMMERCIAL_CODE"), (1636, "GOVERNMENT_GAZETTE_NUMBER")):
         entry = ID_DOC_MAPPINGS[id_]
-        assert "PAYLOAD" in entry["group"].upper(), id_
+        assert entry.get("payload") is True, id_
         instr = entry["instructions"]
         assert instr == [(attr, None)], id_
         assert not any(a.startswith(("NATIONAL_ID", "TAX_ID", "OTHER_ID")) for a, _ in instr), id_
+
+
+def test_payload_key_only_on_non_identifiers():
+    # "payload" is the only routing switch: it is a bool, set on exactly the two non-identifier types.
+    payload_ids = {id_ for id_, entry in ID_DOC_MAPPINGS.items() if entry.get("payload") is True}
+    assert payload_ids == {1508, 1636}
+    for id_, entry in ID_DOC_MAPPINGS.items():
+        assert entry.get("payload", False) in (True, False), id_
+
+
+# Where an entry's instructions route -> its descriptive group label.
+_GROUP_BY_ROUTE = {
+    "SPECIFIC": "SPECIFIC SENZING FEATURES (Direct Mappings)",
+    "TAX_ID": "TAX IDENTIFIERS (Classification per Spec Decision Tree)",
+    "REGISTRATION": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
+    "NATIONAL_ID": "NATIONAL IDENTIFIERS (Country-issued unique per person/org)",
+    "OTHER_ID": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+}
+
+
+def _route(entry):
+    attrs = dict(entry["instructions"])
+    if entry.get("payload") is True:
+        return "PAYLOAD"
+    if any(a.startswith(("PASSPORT_", "SSN_", "DRIVERS_LICENSE_", "LEI_")) for a in attrs):
+        return "SPECIFIC"
+    if any(a.startswith("TAX_ID_") for a in attrs):
+        return "TAX_ID"
+    if any(a.startswith("NATIONAL_ID_") for a in attrs):
+        return "REGISTRATION" if attrs.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER" else "NATIONAL_ID"
+    if any(a.startswith("OTHER_ID_") for a in attrs):
+        return "OTHER_ID"
+    raise AssertionError(f"no route for {attrs}")
+
+
+def test_group_label_matches_routing():
+    # The label is documentation; a stale one (e.g. a tax id still labelled ACCOUNT/FINANCIAL) fails here.
+    for id_, entry in ID_DOC_MAPPINGS.items():
+        route = _route(entry)
+        if route == "PAYLOAD":
+            assert entry["group"].upper().startswith("PAYLOAD"), id_
+        else:
+            assert entry["group"] == _GROUP_BY_ROUTE[route], (id_, entry["group"], route)
 
 
 def test_uk_country_normalized_to_gb():

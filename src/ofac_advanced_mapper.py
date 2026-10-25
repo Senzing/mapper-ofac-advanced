@@ -97,6 +97,10 @@ DATE_ATTRS = {
 
 EMAIL_ATTRS = {"EMAIL_ADDRESS"}
 
+# Sanity cap on a DatePeriod that spans several years (each year is emitted as its own date). The longest span
+# on the 2026-10-02 SDN file is 9 years; a longer one is treated as malformed (see _span_years).
+MAX_DATE_SPAN_YEARS = 20
+
 
 class StrictOFACTransformer:
     """Transform OFAC Advanced XML into strict Senzing JSON."""
@@ -125,6 +129,7 @@ class StrictOFACTransformer:
 
         self._warned_feature_ids: set[int] = set()
         self._warned_doc_ids: set[int] = set()
+        self._warned_subtypes: set[str] = set()
 
     # ------------------------------------------------------------------
     # Public API
@@ -358,22 +363,36 @@ class StrictOFACTransformer:
         try:
             subtype_code = int(subtype)
         except ValueError:
-            return
-        record_type = PARTY_SUBTYPE_TO_RECORD_TYPE.get(subtype_code)
+            subtype_code = None
+        record_type = PARTY_SUBTYPE_TO_RECORD_TYPE.get(subtype_code) if subtype_code is not None else None
         if record_type:
             record["FEATURES"].append({"RECORD_TYPE": record_type})
+        elif subtype not in self._warned_subtypes:
+            # No RECORD_TYPE -> names fall back to NAME_FULL (see _add_names); say so once per subtype.
+            logging.warning("No RECORD_TYPE for PartySubTypeID=%s; names emitted as NAME_FULL", subtype)
+            self._warned_subtypes.add(subtype)
 
     @staticmethod
-    def _is_person(record: Dict) -> bool:
-        """True when the record's RECORD_TYPE feature is PERSON."""
-        return any(f.get("RECORD_TYPE") == "PERSON" for f in record["FEATURES"])
+    def _is_person(record: Dict) -> Optional[bool]:
+        """Person-vs-organization decision from the record's RECORD_TYPE feature.
 
-    def _add_names(self, record: Dict, party: ET.Element, *, is_person: bool) -> None:
+        True for PERSON, False for any other RECORD_TYPE (ORGANIZATION, VESSEL, AIRCRAFT), and None
+        when the record has no RECORD_TYPE (a profile without a PartySubTypeID, or a subtype missing
+        from PARTY_SUBTYPE_TO_RECORD_TYPE). None is "unknown", not "organization": see _add_names.
+        """
+        record_types = [f["RECORD_TYPE"] for f in record["FEATURES"] if f.get("RECORD_TYPE")]
+        if not record_types:
+            return None
+        return "PERSON" in record_types
+
+    def _add_names(self, record: Dict, party: ET.Element, *, is_person: Optional[bool]) -> None:
         """Add one name feature per documented name.
 
-        A person's name is NAME_FULL (plus its parsed parts); every other
-        record type (organization, vessel, aircraft) is an organization-style
-        name, NAME_ORG, with no parsed parts.
+        * person (True): NAME_FULL, plus any parsed parts NAME_PART_MAP recognizes.
+        * organization, vessel or aircraft (False): NAME_ORG, no parsed parts.
+        * unknown (None): NAME_FULL with no parsed parts -- the Entity Specification's attribute for a
+          single-field name whose person/organization type is unknown. This is the safe default: a
+          person is never turned into an organization name, nor an organization into parsed person parts.
         """
         for alias in party.findall(".//ofac:Alias", NS):
             is_primary = alias.get("Primary", "").lower() == "true"
@@ -389,14 +408,14 @@ class StrictOFACTransformer:
                     if not text:
                         continue
                     parts.append(text)
-                    name_attr = NAME_PART_MAP.get(part.get("NamePartTypeID", "")) if is_person else None
+                    name_attr = NAME_PART_MAP.get(part.get("NamePartTypeID", "")) if is_person is True else None
                     if name_attr and name_attr not in name_feature:
                         name_feature[name_attr] = text
 
                 if not parts:
                     continue
 
-                name_feature["NAME_FULL" if is_person else "NAME_ORG"] = " ".join(parts)
+                name_feature["NAME_ORG" if is_person is False else "NAME_FULL"] = " ".join(parts)
 
                 if is_primary:
                     name_feature["NAME_TYPE"] = "PRIMARY"
@@ -442,13 +461,15 @@ class StrictOFACTransformer:
             if mapping_info["section"].startswith("DESCRIPTIVE"):
                 target = "payload"
 
-            values = self._build_attribute_dict(feature, mapping_info["instructions"])
-            if not values:
+            values_list = self._build_attribute_dicts(feature, mapping_info["instructions"])
+            if not values_list:
                 continue
 
             if target == "feature":
-                record["FEATURES"].append(values)
+                # One feature per value: a date spanning several years is one date feature per year.
+                record["FEATURES"].extend(values_list)
             else:
+                values = self._merge_attribute_dicts(values_list)
                 for key, value in values.items():
                     if value in (None, ""):
                         continue
@@ -460,13 +481,43 @@ class StrictOFACTransformer:
 
         return max_reliability
 
-    def _build_attribute_dict(
+    def _build_attribute_dicts(
         self, feature: ET.Element, instructions: Iterable[Tuple[str, Optional[str]]]
+    ) -> List[Dict[str, object]]:
+        """The feature's attribute dict(s): one per year when its date spans several years, else at most one."""
+        instructions = list(instructions)
+        has_dynamic_date = any(constant is None and attr in DATE_ATTRS for attr, constant in instructions)
+        dates = self._extract_feature_dates(feature) if has_dynamic_date else []
+        if len(dates) <= 1:
+            values = self._build_attribute_dict(feature, instructions)
+            return [values] if values else []
+        built = (self._build_attribute_dict(feature, instructions, date_value=date) for date in dates)
+        return [values for values in built if values]
+
+    @staticmethod
+    def _merge_attribute_dicts(values_list: List[Dict[str, object]]) -> Dict[str, object]:
+        """Several per-year dicts as one payload dict: each key's distinct values joined with "; " in order."""
+        if len(values_list) == 1:
+            return values_list[0]
+        merged: Dict[str, List[object]] = {}
+        for values in values_list:
+            for key, value in values.items():
+                if value not in merged.setdefault(key, []):
+                    merged[key].append(value)
+        return {key: "; ".join(str(v) for v in vals) if len(vals) > 1 else vals[0] for key, vals in merged.items()}
+
+    def _build_attribute_dict(
+        self,
+        feature: ET.Element,
+        instructions: Iterable[Tuple[str, Optional[str]]],
+        date_value: Optional[str] = None,
     ) -> Optional[Dict[str, object]]:
         attr_values: Dict[str, object] = {}
 
         text_value = self._extract_feature_text(feature)
-        date_value = self._extract_feature_date(feature)
+        if date_value is None:
+            dates = self._extract_feature_dates(feature)
+            date_value = dates[0] if dates else None
         country_value = self._extract_country_code(feature)
         address_details = self._extract_address_details(feature)
         address_value = address_details.get("full") if address_details else None
@@ -587,16 +638,35 @@ class StrictOFACTransformer:
                         feature_obj[attr] = doc_number
 
                 if feature_obj:
-                    # A doc type whose group is flagged PAYLOAD is not an entity identifier (e.g. a
-                    # name telegraph-encoding or a shared publication reference) -> preserve it as a
-                    # top-level payload attribute, never as a resolvable IDENTIFIER feature.
-                    if "PAYLOAD" in str(mapping.get("group", "")).upper():
+                    # A doc type marked "payload" is not an entity identifier (e.g. a name
+                    # telegraph-encoding or a shared publication reference) -> preserve it as a
+                    # top-level payload attribute, never as a resolvable IDENTIFIER feature. Routing is
+                    # the explicit "payload" key, never the descriptive "group" label.
+                    if mapping.get("payload") is True:
                         for key, value in feature_obj.items():
-                            if value in (None, ""):
-                                continue
-                            record.setdefault(key, value)
+                            self._append_payload_value(record, key, value)
                     else:
                         record["FEATURES"].append(feature_obj)
+
+    @staticmethod
+    def _append_payload_value(record: Dict, key: str, value: object) -> None:
+        """Add a value to a top-level payload attribute, keeping every distinct value.
+
+        A party can hold several documents of one payload type (e.g. two Government Gazette Numbers).
+        Values are joined with "; " in document order with exact duplicates dropped -- the same form as
+        the SANCTIONS_LIST / SANCTIONS_PROGRAMS payload attributes -- so no value is lost and the output
+        is deterministic.
+        """
+        if value in (None, ""):
+            return
+        text = str(value)
+        existing = record.get(key)
+        if existing in (None, ""):
+            record[key] = text
+            return
+        values = str(existing).split("; ")
+        if text not in values:
+            record[key] = f"{existing}; {text}"
 
     def _add_relationships(self, record: Dict, profile: ET.Element) -> None:
         profile_id = profile.get("ID")
@@ -825,7 +895,8 @@ class StrictOFACTransformer:
 
         return None
 
-    def _extract_feature_date(self, feature: ET.Element) -> Optional[str]:
+    def _extract_feature_dates(self, feature: ET.Element) -> List[str]:
+        """The feature's date(s): one value, or one YYYY per year when a DatePeriod spans several years."""
         date_part = feature.find("ofac:FeatureVersion/ofac:DatePart", NS)
         if date_part is not None:
             year_elem = date_part.find("ofac:Year", NS)
@@ -836,25 +907,84 @@ class StrictOFACTransformer:
             day = self._clean_text(day_elem.text if day_elem is not None else None)
             formatted = self._format_date_parts(year, month, day)
             if formatted:
-                return formatted
+                return [formatted]
 
-        # The advanced feed states a date as DatePeriod/Start/From (Year, Month, Day), not as a DatePart.
-        start = feature.find("ofac:FeatureVersion/ofac:DatePeriod/ofac:Start/ofac:From", NS)
-        if start is not None:
-            parts = [
-                self._clean_text(start.findtext(f"ofac:{tag}", default=None, namespaces=NS))
-                for tag in ("Year", "Month", "Day")
-            ]
-            formatted = self._format_date_parts(*parts)
-            if formatted:
-                return formatted
+        # The advanced feed states a date as a DatePeriod, not as a DatePart.
+        period = feature.find("ofac:FeatureVersion/ofac:DatePeriod", NS)
+        if period is not None:
+            dates = self._format_date_period(period)
+            if dates:
+                return dates
 
         text_value = self._extract_feature_text(feature)
         if text_value:
             parsed = self._normalize_date_string(text_value)
             if parsed:
-                return parsed
-        return None
+                return [parsed]
+        return []
+
+    def _date_bound(self, period: ET.Element, path: str) -> Optional[Tuple[str, Optional[str], Optional[str]]]:
+        """One DatePeriod bound (e.g. "Start/From") as normalized (year, month, day), or None without a year."""
+        elem = period.find("/".join(f"ofac:{tag}" for tag in path.split("/")), NS)
+        if elem is None:
+            return None
+        year, month, day = (
+            self._clean_text(elem.findtext(f"ofac:{tag}", default=None, namespaces=NS))
+            for tag in ("Year", "Month", "Day")
+        )
+        if not year:
+            return None
+        month = month.zfill(2) if month and month.isdigit() else None
+        day = day.zfill(2) if month and day and day.isdigit() else None
+        return (year, month, day)
+
+    def _format_date_period(self, period: ET.Element) -> List[str]:
+        """A DatePeriod as the date(s) its bounds actually state.
+
+        The feed writes every date as a period from Start (From..To) to End (From..To). On the 2026-10-02
+        SDN file: an exact date has all four bounds equal; a year-only date is Jan 1 .. Dec 31 of that
+        year (1,110 birth dates); a month-only date is the 1st .. last day of the month; a "circa"/range
+        date spans several years ("1955 to 1957": 108 birth dates and 6 established dates, longest 9 years).
+        Reading only Start/From turned a year-only "1938" into a fabricated "1938-01-01".
+
+        Within one year the value is the part the earliest and latest bounds have in common: equal bounds
+        -> the full date; same year and month -> YYYY-MM; same year -> YYYY. A span crossing years yields
+        every year in it, inclusive (see _span_years), so the caller emits one date per year. A period with
+        no End bound is its Start. The Approximate flag has no Senzing attribute and is not represented.
+        """
+        earliest = self._date_bound(period, "Start/From") or self._date_bound(period, "Start/To")
+        if earliest is None:
+            return []
+        latest = (
+            self._date_bound(period, "End/To")
+            or self._date_bound(period, "End/From")
+            or self._date_bound(period, "Start/To")
+            or earliest
+        )
+        year, month, day = earliest
+        if latest[0] != year:
+            return self._span_years(year, latest[0])
+        if latest[1] != month:
+            return [year]
+        if latest[2] != day:
+            return [self._format_date_parts(year, month, None) or year]
+        return [self._format_date_parts(year, month, day) or year]
+
+    def _span_years(self, first: str, last: str) -> List[str]:
+        """Every year from first to last inclusive, as YYYY strings.
+
+        A span longer than MAX_DATE_SPAN_YEARS is treated as implausible (the longest on the 2026-10-02 SDN
+        file is 9 years): only its two bound years are emitted and a warning is logged, so a malformed
+        period cannot flood a record with date features. A non-numeric or reversed bound yields first only.
+        """
+        if not (first.isdigit() and last.isdigit()) or int(last) < int(first):
+            return [first]
+        if int(last) - int(first) + 1 > MAX_DATE_SPAN_YEARS:
+            logging.warning(
+                "Date span %s-%s exceeds %s years; emitting only its bound years", first, last, MAX_DATE_SPAN_YEARS
+            )
+            return [first, last]
+        return [str(y) for y in range(int(first), int(last) + 1)]
 
     def _extract_location_text(self, feature: ET.Element) -> Optional[str]:
         """The text of the Location a feature version points at (a nationality or citizenship is stated that way)."""
@@ -863,8 +993,15 @@ class StrictOFACTransformer:
         location = self.location_lookup.get(loc_id) if loc_id else None
         if location is None:
             return None
-        value = location.find(".//ofac:LocationPartValue/ofac:Value", NS)
-        return self._clean_text(value.text if value is not None else None)
+        # Prefer the value flagged Primary="true"; fall back to the first value when none is flagged.
+        part_values = location.findall(".//ofac:LocationPartValue", NS)
+        ordered = [pv for pv in part_values if pv.get("Primary", "").lower() == "true"] + part_values
+        for part_value in ordered:
+            value = part_value.find("ofac:Value", NS)
+            text = self._clean_text(value.text if value is not None else None)
+            if text:
+                return text
+        return None
 
     def _extract_country_code(self, element: ET.Element) -> Optional[str]:
         country_id = element.get("CountryID")

@@ -1,4 +1,4 @@
-"""A person's name is NAME_FULL; every other record type's name is NAME_ORG."""
+"""A person's name is NAME_FULL; an organization, vessel or aircraft name is NAME_ORG; an unknown type is NAME_FULL."""
 
 import sys
 import xml.etree.ElementTree as ET
@@ -50,3 +50,46 @@ def test_non_person_name_is_name_org_without_parts(parts):
     assert name["NAME_ORG"] == " ".join(v for _, v in parts)
     assert name["NAME_TYPE"] == "PRIMARY"
     assert not {"NAME_FULL", "NAME_FIRST", "NAME_LAST"} & set(name)
+
+
+def _profile(subtype):
+    """A Profile with the given PartySubTypeID (None -> attribute absent)."""
+    attr = f' PartySubTypeID="{subtype}"' if subtype is not None else ""
+    return ET.fromstring(f'<Profile xmlns="{OFAC}" ID="1"{attr}/>')
+
+
+def _record_for(subtype):
+    """The RECORD_TYPE step's output for one profile."""
+    record = {"FEATURES": []}
+    StrictOFACTransformer()._add_record_type(record, _profile(subtype))  # pylint: disable=protected-access
+    return record
+
+
+@pytest.mark.parametrize(
+    ("subtype", "expected"), [("1", False), ("2", False), ("3", False), ("4", True), (None, None), ("9", None)]
+)
+def test_is_person_decision(subtype, expected):
+    """PERSON -> True; vessel/aircraft/organization -> False; missing or unrecognized subtype -> None."""
+    assert StrictOFACTransformer._is_person(_record_for(subtype)) is expected  # pylint: disable=protected-access
+
+
+def test_unrecognized_subtype_emits_no_record_type_and_warns(caplog):
+    """An unrecognized (or non-numeric) subtype adds no RECORD_TYPE and logs a warning."""
+    for subtype in ("9", "x"):
+        assert not _record_for(subtype)["FEATURES"]
+    assert "PartySubTypeID=9" in caplog.text and "PartySubTypeID=x" in caplog.text
+
+
+def test_name_without_record_type_is_name_full_without_parts():
+    """Unknown type (e.g. a person whose profile has no subtype): NAME_FULL only, never NAME_ORG or parts."""
+    (name,) = _names(None, [("1481", "ZUMAR"), ("1480", "ABOUD")])
+    assert name == {"NAME_FULL": "ZUMAR ABOUD", "NAME_TYPE": "PRIMARY"}
+
+
+def test_person_without_record_type_end_to_end():
+    """A party whose Profile lacks PartySubTypeID gets NAME_FULL names (not NAME_ORG) from _transform_party."""
+    party = _party([("1481", "ZUMAR"), ("1480", "ABOUD")])
+    record = StrictOFACTransformer()._transform_party(party)  # pylint: disable=protected-access
+    assert not any("RECORD_TYPE" in f for f in record["FEATURES"])
+    names = [f for f in record["FEATURES"] if "NAME_TYPE" in f]
+    assert names == [{"NAME_FULL": "ZUMAR ABOUD", "NAME_TYPE": "PRIMARY"}]
