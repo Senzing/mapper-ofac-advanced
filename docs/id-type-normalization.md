@@ -1,11 +1,11 @@
-# OFAC advanced mapper — identifier-type normalization
+# OFAC advanced mapper - identifier-type normalization
 
 ## Why
 
 Every identifier the mapper emits carries a **TYPE** (e.g. `NATIONAL_ID_TYPE`, `TAX_ID_TYPE`) that Senzing
 uses as an **exclusivity namespace**: two records only compare a given id number when they agree on
-feature + type + country. Historically this mapper emitted *typed but not normalized* labels — one concept
-under many spellings (`REG_NUMBER` / `COMPANY_NUMBER` / `Business Registration Number` …), and the same
+feature + type + country. Historically this mapper emitted *typed but not normalized* labels - one concept
+under many spellings (`REG_NUMBER` / `COMPANY_NUMBER` / `Business Registration Number` ...), and the same
 concept split across features (`NATIONAL_ID` vs `OTHER_ID` vs `ACCOUNT`). The effect: a shared registration
 number under two different labels scores as a **conflict** (~50, `NO_CHANCE`) instead of a match, and OFAC
 records never align cross-source with the same entities from OpenSanctions or Sayari.
@@ -15,79 +15,79 @@ This normalization makes the mapper emit, for each OFAC document type, the **cor
 
 ## Authorities (in precedence order)
 
-1. **Senzing Entity Specification** — the authoritative "Senzing home" (which *feature* an id belongs on).
-   Confirms: tax ids → `TAX_ID` (it marks *"EIN as NATIONAL_ID"* as wrong); `CEDULA`/`OGRN` → `NATIONAL_ID`;
-   `VAT`/`TIN` → `TAX_ID`; `IMO` → `OTHER_ID`; `LEI`/`SSN`/`Passport` → their own features; and *"code-driven
-   'identifier' tables … name-encodings, free-text notes … do not map as identifiers (including OTHER_ID) →
+1. **Senzing Entity Specification** - the authoritative "Senzing home" (which *feature* an id belongs on).
+   Confirms: tax ids -> `TAX_ID` (it marks *"EIN as NATIONAL_ID"* as wrong); `CEDULA`/`OGRN` -> `NATIONAL_ID`;
+   `VAT`/`TIN` -> `TAX_ID`; `IMO` -> `OTHER_ID`; `LEI`/`SSN`/`Passport` -> their own features; and *"code-driven
+   'identifier' tables ... name-encodings, free-text notes ... do not map as identifiers (including OTHER_ID) ->
    route to a registered feature, otherwise payload or omit."*
-2. **OpenSanctions `doc_types` crosswalk** (FtM property names) — which OFAC labels are the **same scheme**
+2. **OpenSanctions `doc_types` crosswalk** (FtM property names) - which OFAC labels are the **same scheme**
    (e.g. every business-registration label is one `registrationNumber` concept). The mapper emits each
-   scheme as one upper-case token: `REGISTRATION_NUMBER`, `VAT`, `CURP`, `DNI`, … (see the generated table).
-3. **`Senzing/mapper-sayari-spark`** reviewed `sayari_codes.csv` (all 980 rows `REVIEWED=Y`) — an independent
-   cross-check of feature placement (tax → `TAX_ID`, voter → `OTHER_ID`, CUIT → `NATIONAL_ID`).
+   scheme as one upper-case token: `REGISTRATION_NUMBER`, `VAT`, `CURP`, `DNI`, ... (see the generated table).
+3. **`Senzing/mapper-sayari-spark`** reviewed `sayari_codes.csv` (all 980 rows `REVIEWED=Y`) - an independent
+   cross-check of feature placement (tax -> `TAX_ID`, voter -> `OTHER_ID`, CUIT -> `NATIONAL_ID`).
 
 ## Rules
 
-- **R1 — generic labels stay UNTYPED.** A label that merely restates the feature (`National ID No.`,
-  `Identification Number`, `Personal ID Card`) carries no `NATIONAL_ID_TYPE` — the feature already declares
+- **R1 - generic labels stay UNTYPED.** A label that merely restates the feature (`National ID No.`,
+  `Identification Number`, `Personal ID Card`) carries no `NATIONAL_ID_TYPE` - the feature already declares
   the class, and an explicit generic type would falsely conflict with a specific-typed value of the same
   number.
-- **R2 — exclusivity by the strict test.** An id goes on an **exclusive** feature (`NATIONAL_ID`/`TAX_ID`)
+- **R2 - exclusivity by the strict test.** An id goes on an **exclusive** feature (`NATIONAL_ID`/`TAX_ID`)
   only if each entity has exactly **one for its lifetime per country+type** and it is **uniquely held**.
-  Many-per-entity / reissued / shared values (licenses, permits, trademarks, serials, voter rolls) → the
+  Many-per-entity / reissued / shared values (licenses, permits, trademarks, serials, voter rolls) -> the
   **non-exclusive `OTHER_ID`** feature (otherwise they manufacture F1ES denials or spurious links).
-- **R3 — dedicated features win.** `PASSPORT`, `SSN`, `LEI_NUMBER`, `DUNS_NUMBER`, `DRIVERS_LICENSE` keep
+- **R3 - dedicated features win.** `PASSPORT`, `SSN`, `LEI_NUMBER`, `DUNS_NUMBER`, `DRIVERS_LICENSE` keep
   their own features rather than collapsing into `NATIONAL_ID`.
-- **R4 — not-an-identifier → payload.** Name-encodings and publication references are preserved as top-level
+- **R4 - not-an-identifier -> payload.** Name-encodings and publication references are preserved as top-level
   payload attributes, never as resolvable identifiers.
 
 ## Crosswalk (by class)
 
 | Class | OFAC labels (examples) | Senzing home | Type value |
 | --- | --- | --- | --- |
-| Business registration | Registration Number, Company Number, Commercial Registry Number, Enterprise Number, C.I.N., Registered Charity No., USCC/USCCC … | `NATIONAL_ID` | `NATIONAL_ID_TYPE=REGISTRATION_NUMBER` |
+| Business registration | Registration Number, Company Number, Commercial Registry Number, Enterprise Number, C.I.N., Registered Charity No., USCC/USCCC ... | `NATIONAL_ID` | `NATIONAL_ID_TYPE=REGISTRATION_NUMBER` |
 | Russian individual-entrepreneur reg | OGRNIP | `NATIONAL_ID` | `NATIONAL_ID_TYPE=REGISTRATION_NUMBER` + `NATIONAL_ID_SUBTYPE=OGRN` (see below) |
-| LEI | Legal Entity Number, LE Number | `LEI_NUMBER` | — |
+| LEI | Legal Entity Number, LE Number | `LEI_NUMBER` | - |
 | Tax numbers | R.F.C., N.I.F., C.I.F., RTN, RUC #, RIF #, US FEIN, Italian Fiscal Code, Fiscal Code, Tax ID No., Paraguayan tax, Romanian Tax Registration, NIT #, NUIT | `TAX_ID` | no `TAX_ID_TYPE` |
 | VAT | V.A.T. Number | `TAX_ID` | `TAX_ID_TYPE=VAT` |
 | Person national-id schemes | C.U.R.P., D.N.I., Cedula No., C.U.I.P., C.U.I., C.U.I.T., N.I.E., CNP, Turkish/UAE/Citizen's Card, Tazkira | `NATIONAL_ID` | upper-case scheme token (`CURP`, `DNI`, `CEDULA`, `CUIP`, `CUI`, `CUIT`, `NIE`, `CNP`, `TCKN`, `EID`, `CCN`, `TAZKIRA`) |
 | Generic national-id (R1) | National ID No., Identification Number, Numero de Identidad, Personal/Federal ID Card, Kenyan/Bosnian/Moroccan ID No., National Foreign ID Number | `NATIONAL_ID` | no `NATIONAL_ID_TYPE` |
-| Passport / SSN | Passport variants, SSN | `PASSPORT` / `SSN` | — |
-| Licenses / permits / documents (R2) | Trade/Tourism/Pilot/MSB/Afghan-MSP License, Trademark, Permit, Serial No., Travel Document, Visa, Immigration, Refugee/Stateless/Seafarer ID, Residency, File Number, voter/electoral (Credencial electoral, I.F.E., Electoral Registry No.) | `OTHER_ID` | `licenseNumber` / `permitNumber` / `trademarkNumber` / `serialNumber` / `fileNumber` / an upper-case label (`TRAVEL_DOC`, `VISA`, `ELECTORAL`, …) |
+| Passport / SSN | Passport variants, SSN | `PASSPORT` / `SSN` | - |
+| Licenses / permits / documents (R2) | Trade/Tourism/Pilot/MSB/Afghan-MSP License, Trademark, Permit, Serial No., Travel Document, Visa, Immigration, Refugee/Stateless/Seafarer ID, Residency, File Number, voter/electoral (Credencial electoral, I.F.E., Electoral Registry No.) | `OTHER_ID` | `licenseNumber` / `permitNumber` / `trademarkNumber` / `serialNumber` / `fileNumber` / an upper-case label (`TRAVEL_DOC`, `VISA`, `ELECTORAL`, ...) |
 | Vessel / aircraft / GIIN / MMSI | IMO, Aircraft Serial, GIIN, MMSI | `OTHER_ID` | `imoNumber` / `serialNumber` / `giiNumber` / `MMSI` |
-| Driver's license | Driver's License No. | `DRIVERS_LICENSE` | — |
-| Not identifiers (R4) → payload | Chinese Commercial Code (a Chinese-name telegraph encoding, shared by same-named entities), Government Gazette Number (a publication reference, shared per issue) | payload `CHINESE_COMMERCIAL_CODE` / `GOVERNMENT_GAZETTE_NUMBER` | — |
+| Driver's license | Driver's License No. | `DRIVERS_LICENSE` | - |
+| Not identifiers (R4) -> payload | Chinese Commercial Code (a Chinese-name telegraph encoding, shared by same-named entities), Government Gazette Number (a publication reference, shared per issue) | payload `CHINESE_COMMERCIAL_CODE` / `GOVERNMENT_GAZETTE_NUMBER` | - |
 
 The complete per-type table is generated from the code at the end of this document.
 
 ### Tax deep-dive
 
-`TAX_ID` in the config is **untyped without `TAX_ID_TYPE`** — one shared namespace per country. A generic
+`TAX_ID` in the config is **untyped without `TAX_ID_TYPE`** - one shared namespace per country. A generic
 national tax number carries **no** `TAX_ID_TYPE` (so a bare tax number from another source bridges instead of
 conflicting on a token); only VAT is typed, `TAX_ID_TYPE=VAT`, which keeps it apart from the national tax
 number once `TAX_ID_TYPE` is configured (below). **CUIT** is
-Argentina's universal identifier (used well beyond tax) — OpenSanctions *and* Sayari place it on `NATIONAL_ID`,
-so it stays there. **NIT / NUIT / Italian Fiscal Code** are tax ids → `TAX_ID` (owner-confirmed; diverges from
+Argentina's universal identifier (used well beyond tax) - OpenSanctions *and* Sayari place it on `NATIONAL_ID`,
+so it stays there. **NIT / NUIT / Italian Fiscal Code** are tax ids -> `TAX_ID` (owner-confirmed; diverges from
 OpenSanctions' `idNumber`/`OTHER_ID` bucketing for those, which is arguably an upstream OpenSanctions defect).
 
-## Config dependency — `TAX_ID_TYPE`
+## Config dependency - `TAX_ID_TYPE`
 
 `TAX_ID_TYPE` requires the `ID_TYPE` element on the `TAX_ID` feature **and in its comparison call** (the
-comparison-call row is what actually makes the type *scored* — the feature-BOM element alone only stores it).
+comparison-call row is what actually makes the type *scored* - the feature-BOM element alone only stores it).
 **Senzing 4.4's default config ships it.** For engines whose config predates that (e.g. 4.4.0-26224, whose
 template has `NATIONAL_ID ID_TYPE` scored but nothing on `TAX_ID`), apply `src/ofac_config_updates.gtc`
-(`sz_configtool -f …`) — three commands mirroring `NATIONAL_ID`: `addElementToFeature`,
+(`sz_configtool -f ...`) - three commands mirroring `NATIONAL_ID`: `addElementToFeature`,
 `addComparisonCallElement` (scores it), and `addAttribute`. Idempotent. Verified live by the maintainer: two
 records sharing a tax number but with different `TAX_ID_TYPE` values are held apart only once the
 comparison-call element is present.
 
-## Config dependency — `NATIONAL_ID_SUBTYPE` (OGRNIP)
+## Config dependency - `NATIONAL_ID_SUBTYPE` (OGRNIP)
 
 The mapper emits `NATIONAL_ID_SUBTYPE=OGRN` for OGRNIP (mapping entry 2772; feed `IDRegDocTypeID` 92772,
 matched by name), next to `NATIONAL_ID_TYPE=REGISTRATION_NUMBER`. `NATIONAL_ID_SUBTYPE` is **not** registered by
 `src/ofac_config_updates.gtc` and is **not** in the default Senzing config yet. This is deliberate: the attribute
-is planned for a future default config. Until it is added — by that config, or by a user who registers the
-subtype in their own config — the value is ignored at load. On the 2026-10-02 SDN file it occurs on 2 records.
+is planned for a future default config. Until it is added - by that config, or by a user who registers the
+subtype in their own config - the value is ignored at load. On the 2026-10-02 SDN file it occurs on 2 records.
 
 ## Payload attributes
 
@@ -109,20 +109,20 @@ file is 373 characters (`EO_13846_INFO`).
 
 - **Alignment** is realized when OFAC, OpenSanctions, and Sayari emit the same feature + type for the same
   id, so the peer mappers must emit the same type tokens listed here (`REGISTRATION_NUMBER`, `VAT`,
-  `CURP`, …). (The Sayari mapper is a separate future project.)
-- **Pure relabel:** on the full Treasury SDN the id-NUMBER multiset is unchanged before/after — only
+  `CURP`, ...). (The Sayari mapper is a separate future project.)
+- **Pure relabel:** on the full Treasury SDN the id-NUMBER multiset is unchanged before/after - only
   feature/type labels move; Chinese Commercial Codes and Government Gazette Numbers move to payload (12 and
   351 on the 2026-10-02 file, 19,488 records).
 - **A/B gate:** run a ground-truth entity-resolution A/B (baseline vs normalized) before the change reaches the
   deployed demo; re-mapping OFAC should co-land with the OpenSanctions peer normalization so cross-source ids
   align rather than detach.
 
-## Open / borderline (kept conservative — promote only with confirmation)
+## Open / borderline (kept conservative - promote only with confirmation)
 
-- Voter/electoral → `OTHER_ID` (Sayari's reviewed call; voter rolls are not one-per-lifetime-unique).
-- Military Registration / Cartilla Militar / Birth Certificate → `OTHER_ID` (uniqueness/one-per-lifetime
+- Voter/electoral -> `OTHER_ID` (Sayari's reviewed call; voter rolls are not one-per-lifetime-unique).
+- Military Registration / Cartilla Militar / Birth Certificate -> `OTHER_ID` (uniqueness/one-per-lifetime
   uncertain; promote to `NATIONAL_ID` only if confirmed).
-- Trademark / Permit / Serial No. → `OTHER_ID` (many-per-entity; OpenSanctions makes them exclusive
+- Trademark / Permit / Serial No. -> `OTHER_ID` (many-per-entity; OpenSanctions makes them exclusive
   `registrationNumber`, which would manufacture denials).
 
 ## Generated table (every mapped document type)

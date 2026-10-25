@@ -58,6 +58,7 @@
     "OGRNIP",
     "PEESA",
     "psutil",
+    "pycache",
     "pylint",
     "pyproject",
     "pytest",
