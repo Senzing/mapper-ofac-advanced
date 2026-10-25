@@ -484,6 +484,10 @@ class StrictOFACTransformer:
             elif attr in COUNTRY_ATTRS:
                 if country_value:
                     attr_values[attr] = country_value
+                elif attr in ("NATIONALITY", "CITIZENSHIP"):
+                    location_text = self._extract_location_text(feature)
+                    if location_text:
+                        attr_values[attr] = location_text
             elif attr in EMAIL_ATTRS:
                 if text_value:
                     attr_values[attr] = text_value.lower()
@@ -834,12 +838,33 @@ class StrictOFACTransformer:
             if formatted:
                 return formatted
 
+        # The advanced feed states a date as DatePeriod/Start/From (Year, Month, Day), not as a DatePart.
+        start = feature.find("ofac:FeatureVersion/ofac:DatePeriod/ofac:Start/ofac:From", NS)
+        if start is not None:
+            parts = [
+                self._clean_text(start.findtext(f"ofac:{tag}", default=None, namespaces=NS))
+                for tag in ("Year", "Month", "Day")
+            ]
+            formatted = self._format_date_parts(*parts)
+            if formatted:
+                return formatted
+
         text_value = self._extract_feature_text(feature)
         if text_value:
             parsed = self._normalize_date_string(text_value)
             if parsed:
                 return parsed
         return None
+
+    def _extract_location_text(self, feature: ET.Element) -> Optional[str]:
+        """The text of the Location a feature version points at (a nationality or citizenship is stated that way)."""
+        version_location = feature.find("ofac:FeatureVersion/ofac:VersionLocation", NS)
+        loc_id = version_location.get("LocationID") if version_location is not None else None
+        location = self.location_lookup.get(loc_id) if loc_id else None
+        if location is None:
+            return None
+        value = location.find(".//ofac:LocationPartValue/ofac:Value", NS)
+        return self._clean_text(value.text if value is not None else None)
 
     def _extract_country_code(self, element: ET.Element) -> Optional[str]:
         country_id = element.get("CountryID")
