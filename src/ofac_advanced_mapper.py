@@ -66,14 +66,6 @@ RELATIONSHIP_ROLE_MAP = {
     1555: "ASSOCIATE_OF",
 }
 
-NAME_PART_MAP = {
-    "1480": "NAME_FIRST",
-    "1481": "NAME_LAST",
-    "1482": "NAME_MIDDLE",
-    "1483": "NAME_SUFFIX",
-    "1484": "NAME_PREFIX",
-}
-
 COUNTRY_ATTRS = {
     "CITIZENSHIP",
     "NATIONALITY",
@@ -389,11 +381,16 @@ class StrictOFACTransformer:
     def _add_names(self, record: Dict, party: ET.Element, *, is_person: Optional[bool]) -> None:
         """Add one name feature per documented name.
 
-        * person (True): NAME_FULL, plus any parsed parts NAME_PART_MAP recognizes.
-        * organization, vessel or aircraft (False): NAME_ORG, no parsed parts.
-        * unknown (None): NAME_FULL with no parsed parts -- the Entity Specification's attribute for a
-          single-field name whose person/organization type is unknown. This is the safe default: a
-          person is never turned into an organization name, nor an organization into parsed person parts.
+        * person (True): NAME_FULL.
+        * organization, vessel or aircraft (False): NAME_ORG.
+        * unknown (None): NAME_FULL -- the Entity Specification's attribute for a single-field name whose
+          person/organization type is unknown. This is the safe default: a person is never turned into an
+          organization name.
+
+        The value is the documented name's parts joined with spaces. No NAME_FIRST/NAME_LAST/... parts are
+        emitted: the feed's DocumentedNamePart carries no type of its own, and names are never parsed by
+        the mapper. Genuine typed parts, if a feed ever provides them, belong in a SEPARATE name feature;
+        the Entity Specification forbids mixing NAME_FULL with parsed parts in one feature.
         """
         for alias in party.findall(".//ofac:Alias", NS):
             is_primary = alias.get("Primary", "").lower() == "true"
@@ -409,9 +406,6 @@ class StrictOFACTransformer:
                     if not text:
                         continue
                     parts.append(text)
-                    name_attr = NAME_PART_MAP.get(part.get("NamePartTypeID", "")) if is_person is True else None
-                    if name_attr and name_attr not in name_feature:
-                        name_feature[name_attr] = text
 
                 if not parts:
                     continue

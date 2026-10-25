@@ -17,6 +17,12 @@ Behavior changes to the emitted JSON; re-map and reload to pick them up.
   ...); generic national-id labels are untyped; `UK` country constants are `GB`.
 - Names: a person's name is `NAME_FULL`; an organization, vessel or aircraft name is `NAME_ORG`; a record with
   no `RECORD_TYPE` gets `NAME_FULL` (Entity Specification attribute for an unknown name type).
+
+### Removed in Unreleased
+
+- The unreachable person-name part parsing (`NAME_PART_MAP`, codes 1480-1484; the feed's name parts carry no
+  `NamePartTypeID`, so it never fired). Persons are `NAME_FULL` only; names are not parsed. Genuine typed parts,
+  if a feed provides them, belong in a separate name feature, never mixed with `NAME_FULL` in one feature.
 - Dates (`DATE_OF_BIRTH`, `REGISTRATION_DATE`, `AIRCRAFT_MANUFACTURE_DATE`, EO 14024 dates) are read from the
   feed's `DatePeriod` at the precision its bounds state: a year-only period is `YYYY` and a month-only period
   `YYYY-MM` (not a fabricated `-01-01`). A period spanning several years emits every year in it as its own

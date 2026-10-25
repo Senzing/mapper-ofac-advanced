@@ -49,7 +49,7 @@ The transformer follows a single-pass processing model:
 1. **Load phase** (`StrictOFACTransformer.load()`): Parses XML and builds lookup tables for countries, feature types, document types, relationships, sanctions entries, and locations from reference data embedded in the feed.
 
 2. **Transform phase** (`StrictOFACTransformer.transform()`): Iterates through `DistinctParty` elements, converting each to a Senzing JSON record with:
-   - Names extracted from `Alias` elements with type classification (PRIMARY, AKA, FKA, NKA)
+   - Names extracted from `Alias` elements with type classification (PRIMARY, AKA, FKA, NKA): `NAME_FULL` for a person or unknown type, `NAME_ORG` otherwise; names are never parsed into parts
    - Features mapped via `src/config/feature_mappings.py` (72 OFAC feature codes → Senzing attributes)
    - Identity documents mapped via `src/config/id_doc_mappings.py` (86 document types → Senzing identifiers)
    - Relationship anchors and pointers for inter-entity connections

@@ -84,6 +84,13 @@ per-type table is generated from `src/config/id_doc_mappings.py`
 (`python tests/test_docs_id_table.py`). In that file `"group"` is descriptive
 only; `"payload": True` routes a document type to a top-level payload attribute.
 
+Names: a person's name is emitted as `NAME_FULL` (the documented name's parts
+joined), an organization, vessel or aircraft name as `NAME_ORG`, and a name of
+unknown type as `NAME_FULL`. The feed's name parts carry no reliable type of
+their own and the mapper does not parse names, so no `NAME_FIRST`/`NAME_LAST`
+parts are emitted. Genuine typed parts, if they become available, belong in a
+separate name feature, never mixed with `NAME_FULL` in the same feature.
+
 Top-level payload attributes (from payload features or payload document types)
 keep every distinct value a party carries, in document order, joined with
 `"; "`; identical repeats collapse to one value and a single value is written

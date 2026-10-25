@@ -14,17 +14,24 @@ from ofac_advanced_mapper import (  # noqa: E402  pylint: disable=wrong-import-p
 )
 
 OFAC = NS["ofac"]
-PART = "<DocumentedNamePart NamePartTypeID='{type_id}'><NamePartValue>{value}</NamePartValue></DocumentedNamePart>"
+# The live feed's shape: a DocumentedNamePart has no type attribute; its NamePartValue points at a
+# NamePartGroup, which the Identity declares with a NamePartTypeID (1520 Last Name, 1521 First Name, ...).
+PART = "<DocumentedNamePart><NamePartValue NamePartGroupID='{group}'>{value}</NamePartValue></DocumentedNamePart>"
+GROUP = "<MasterNamePartGroup><NamePartGroup ID='{group}' NamePartTypeID='{type_id}'/></MasterNamePartGroup>"
 
 
 def _party(parts):
     """A DistinctParty with one primary documented name made of (NamePartTypeID, value) parts."""
-    body = "".join(PART.format(type_id=t, value=v) for t, v in parts)
+    body = "".join(PART.format(group=i, value=v) for i, (_, v) in enumerate(parts))
+    groups = "".join(GROUP.format(group=i, type_id=t) for i, (t, _) in enumerate(parts))
     return ET.fromstring(
         f'<DistinctParty xmlns="{OFAC}" FixedRef="1"><Profile ID="1"><Identity>'
         f'<Alias Primary="true" AliasTypeID="1403"><DocumentedName>{body}</DocumentedName></Alias>'
-        "</Identity></Profile></DistinctParty>"
+        f"<NamePartGroups>{groups}</NamePartGroups></Identity></Profile></DistinctParty>"
     )
+
+
+NAME_PARTS = {"NAME_FIRST", "NAME_LAST", "NAME_MIDDLE", "NAME_SUFFIX", "NAME_PREFIX"}
 
 
 def _names(is_person, parts):
@@ -35,21 +42,20 @@ def _names(is_person, parts):
     return [f for f in record["FEATURES"] if any(k.startswith("NAME_") and k != "NAME_TYPE" for k in f)]
 
 
-def test_person_name_is_name_full_with_parts():
-    """A person keeps NAME_FULL and its parsed first/last parts."""
-    (name,) = _names(True, [("1481", "ZUMAR"), ("1480", "ABOUD")])
-    assert name["NAME_FULL"] == "ZUMAR ABOUD"
-    assert name["NAME_LAST"] == "ZUMAR" and name["NAME_FIRST"] == "ABOUD"
-    assert "NAME_ORG" not in name
+def test_person_name_is_name_full_without_parts():
+    """A person is NAME_FULL only: typed parts (Last/First Name) are joined, never emitted as NAME_* parts."""
+    (name,) = _names(True, [("1520", "ZUMAR"), ("1521", "ABOUD")])
+    assert name == {"NAME_FULL": "ZUMAR ABOUD", "NAME_TYPE": "PRIMARY"}
+    assert not NAME_PARTS & set(name)
 
 
-@pytest.mark.parametrize("parts", [[("1481", "CIMEX, S.A.")], [("1481", "MAR"), ("1481", "AZUL")]])
+@pytest.mark.parametrize("parts", [[("1525", "CIMEX, S.A.")], [("1526", "MAR"), ("1526", "AZUL")]])
 def test_non_person_name_is_name_org_without_parts(parts):
     """An organization, vessel or aircraft name is NAME_ORG only: no NAME_FULL and no parsed parts."""
     (name,) = _names(False, parts)
     assert name["NAME_ORG"] == " ".join(v for _, v in parts)
     assert name["NAME_TYPE"] == "PRIMARY"
-    assert not {"NAME_FULL", "NAME_FIRST", "NAME_LAST"} & set(name)
+    assert not ({"NAME_FULL"} | NAME_PARTS) & set(name)
 
 
 def _profile(subtype):
@@ -82,13 +88,13 @@ def test_unrecognized_subtype_emits_no_record_type_and_warns(caplog):
 
 def test_name_without_record_type_is_name_full_without_parts():
     """Unknown type (e.g. a person whose profile has no subtype): NAME_FULL only, never NAME_ORG or parts."""
-    (name,) = _names(None, [("1481", "ZUMAR"), ("1480", "ABOUD")])
+    (name,) = _names(None, [("1520", "ZUMAR"), ("1521", "ABOUD")])
     assert name == {"NAME_FULL": "ZUMAR ABOUD", "NAME_TYPE": "PRIMARY"}
 
 
 def test_person_without_record_type_end_to_end():
     """A party whose Profile lacks PartySubTypeID gets NAME_FULL names (not NAME_ORG) from _transform_party."""
-    party = _party([("1481", "ZUMAR"), ("1480", "ABOUD")])
+    party = _party([("1520", "ZUMAR"), ("1521", "ABOUD")])
     record = StrictOFACTransformer()._transform_party(party)  # pylint: disable=protected-access
     assert not any("RECORD_TYPE" in f for f in record["FEATURES"])
     names = [f for f in record["FEATURES"] if "NAME_TYPE" in f]
