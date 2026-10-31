@@ -9,32 +9,37 @@
 #   "payload"      True -> the value is not an entity identifier (a name telegraph-encoding, a shared
 #                  publication reference); the mapper writes it as a top-level payload attribute, never as
 #                  a FEATURES entry. Absent -> a normal identifier feature.
+#   "type_by_country" Optional {issuing country: TYPE token}. When the document's issuing country is a key,
+#                  the matching *_TYPE is added (e.g. a Russian "Tax ID No." is the INN). The label alone
+#                  names no scheme; label + issuer does.
 #   "instructions" (attribute, constant) pairs; a None constant takes the document's number/country/region.
 #
-# Type values: the business-registration family -> NATIONAL_ID_TYPE=REGISTRATION_NUMBER; OGRNIP ->
-# REGISTRATION_NUMBER + NATIONAL_ID_SUBTYPE=OGRN (see the note on that entry: the attribute is not in the
-# default Senzing config yet). Tax ids -> TAX_ID with no TAX_ID_TYPE for a generic tax number and
-# TAX_ID_TYPE=VAT for VAT. LEIs -> LEI_NUMBER. Named person schemes carry an upper-case scheme token
-# (CURP, DNI, CEDULA, ...); generic "national id" labels carry no NATIONAL_ID_TYPE (the feature already
-# declares the class). Voter/electoral and many-per-entity or reissued documents (licenses, permits,
-# trademarks, serials) stay on the non-exclusive OTHER_ID feature.
+# Every TYPE token is the canonical one from the Senzing identifier crosswalk vocabulary (this table is the
+# OFAC-specific mapping of OFAC's labels onto it). Type values: the business-registration family (incl.
+# state file numbers) -> NATIONAL_ID_TYPE=REGISTRATION_NUMBER; OGRNIP -> REGISTRATION_NUMBER +
+# NATIONAL_ID_SUBTYPE=OGRNIP (registered by src/ofac_config_updates.gtc). Tax ids -> TAX_ID with no
+# TAX_ID_TYPE for a generic tax number, TAX_ID_TYPE=VAT for VAT, CUIT (AR) and INN (a Russian Tax ID No.).
+# LEIs -> LEI_NUMBER; IMO / MMSI -> the IMO_NUMBER / MMSI_NUMBER features (registered by the .gtc). Named
+# person schemes carry an upper-case scheme token (CURP, DNI, CEDULA, ...); generic "national id" labels
+# carry no NATIONAL_ID_TYPE (the feature already declares the class). Voter/electoral and many-per-entity or
+# reissued documents stay on the non-exclusive OTHER_ID feature with a canonical token (LICENSE, PERMIT,
+# ELECTORAL, RESIDENCY, ...). Values that do not identify the entity under a known scheme (a serial number of
+# an unnamed document, a trademark, a branch unit number, OFAC's "Entity Code") are payload.
 ID_DOC_MAPPINGS = {
     1236: {
         "name": "Afghan Money Service Provider License Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", "AF"),
         ],
     },
     1264: {
         "name": "MMSI",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "SPECIFIC SENZING FEATURES (Direct Mappings)",
         "instructions": [
-            ("OTHER_ID_TYPE", "MMSI"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("MMSI_NUMBER", None),
         ],
     },
     1412: {
@@ -83,7 +88,7 @@ ID_DOC_MAPPINGS = {
         "name": "SRE Permit No.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "SRE_PERMIT"),
+            ("OTHER_ID_TYPE", "PERMIT"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -101,7 +106,7 @@ ID_DOC_MAPPINGS = {
         "name": "License",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -298,11 +303,10 @@ ID_DOC_MAPPINGS = {
     },
     1593: {
         "name": "Serial No.",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "PAYLOAD - serial number of an unnamed document (scheme unknown, not a typed identifier)",
+        "payload": True,
         "instructions": [
-            ("OTHER_ID_TYPE", "serialNumber"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("SERIAL_NUMBER", None),
         ],
     },
     1594: {
@@ -316,16 +320,17 @@ ID_DOC_MAPPINGS = {
     },
     1595: {
         "name": "C.U.I.T.",
-        "group": "NATIONAL IDENTIFIERS (Country-issued unique per person/org)",
+        "group": "TAX IDENTIFIERS (Classification per Spec Decision Tree)",
         "instructions": [
-            ("NATIONAL_ID_TYPE", "CUIT"),
-            ("NATIONAL_ID_NUMBER", None),
-            ("NATIONAL_ID_COUNTRY", None),
+            ("TAX_ID_TYPE", "CUIT"),
+            ("TAX_ID_NUMBER", None),
+            ("TAX_ID_COUNTRY", "AR"),
         ],
     },
     1596: {
         "name": "Tax ID No.",
         "group": "TAX IDENTIFIERS (Classification per Spec Decision Tree)",
+        "type_by_country": {"RU": "INN"},
         "instructions": [
             ("TAX_ID_NUMBER", None),
             ("TAX_ID_COUNTRY", None),
@@ -343,7 +348,7 @@ ID_DOC_MAPPINGS = {
         "name": "Public Security and Immigration No.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "PSI"),
+            ("OTHER_ID_TYPE", "IMMIGRATION"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -405,7 +410,7 @@ ID_DOC_MAPPINGS = {
         "name": "Electoral Registry No.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "ELECTORAL_REG"),
+            ("OTHER_ID_TYPE", "ELECTORAL"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -463,7 +468,7 @@ ID_DOC_MAPPINGS = {
         "name": "Trade License No.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -490,7 +495,7 @@ ID_DOC_MAPPINGS = {
         "name": "Tourism License No.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -499,7 +504,7 @@ ID_DOC_MAPPINGS = {
         "name": "Aircraft Serial Identification",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "serialNumber"),
+            ("OTHER_ID_TYPE", "AIRCRAFT_MSN"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -524,11 +529,9 @@ ID_DOC_MAPPINGS = {
     },
     1626: {
         "name": "Vessel Registration Identification",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "SPECIFIC SENZING FEATURES (Direct Mappings)",
         "instructions": [
-            ("OTHER_ID_TYPE", "imoNumber"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("IMO_NUMBER", None),
         ],
     },
     1627: {
@@ -604,7 +607,7 @@ ID_DOC_MAPPINGS = {
         "name": "Romanian Permanent Resident",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "ROM_PERM_RES"),
+            ("OTHER_ID_TYPE", "RESIDENCY"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", "RO"),
         ],
@@ -629,7 +632,7 @@ ID_DOC_MAPPINGS = {
         "name": "Pilot License Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -708,18 +711,17 @@ ID_DOC_MAPPINGS = {
         "name": "I.F.E.",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "IFE"),
+            ("OTHER_ID_TYPE", "ELECTORAL"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
     },
     1719: {
         "name": "Branch Unit Number",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "PAYLOAD - branch/establishment unit number (identifies a branch, not the entity)",
+        "payload": True,
         "instructions": [
-            ("OTHER_ID_TYPE", "branchUnitNumber"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("BRANCH_UNIT_NUMBER", None),
         ],
     },
     1720: {
@@ -823,18 +825,18 @@ ID_DOC_MAPPINGS = {
         "name": "MSB Registration Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "licenseNumber"),
+            ("OTHER_ID_TYPE", "LICENSE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
     },
     1835: {
         "name": "File Number",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
-            ("OTHER_ID_TYPE", "fileNumber"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
         ],
     },
     1854: {
@@ -884,18 +886,17 @@ ID_DOC_MAPPINGS = {
     },
     2158: {
         "name": "Trademark number",
-        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "group": "PAYLOAD - trademark registration (identifies a mark, not the entity)",
+        "payload": True,
         "instructions": [
-            ("OTHER_ID_TYPE", "trademarkNumber"),
-            ("OTHER_ID_NUMBER", None),
-            ("OTHER_ID_COUNTRY", None),
+            ("TRADEMARK_NUMBER", None),
         ],
     },
     2159: {
         "name": "Permit Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "permitNumber"),
+            ("OTHER_ID_TYPE", "PERMIT"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
@@ -904,21 +905,20 @@ ID_DOC_MAPPINGS = {
         "name": "Military Registration Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "militaryRegistrationNumber"),
+            ("OTHER_ID_TYPE", "MILITARY_SERVICE"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
         ],
     },
-    # OGRNIP (feed IDRegDocTypeID 92772, matched by name). NATIONAL_ID_SUBTYPE is not registered by
-    # src/ofac_config_updates.gtc and is not in the default Senzing config yet. It is emitted on purpose
-    # (maintainer decision): until the attribute is added -- by a future default config, or by the user
-    # registering it in their own config -- the value is ignored at load.
+    # OGRNIP (feed IDRegDocTypeID 92772, matched by name): the individual-entrepreneur sub-registry of the
+    # Russian registration number. NATIONAL_ID_SUBTYPE is not in the default Senzing config; it is registered
+    # by src/ofac_config_updates.gtc (without it the value is ignored at load).
     2772: {
         "name": "Russian State Individual Business Registration Number Pattern (OGRNIP)",
         "group": "BUSINESS/ORGANIZATION REGISTRATIONS (National-level)",
         "instructions": [
             ("NATIONAL_ID_TYPE", "REGISTRATION_NUMBER"),
-            ("NATIONAL_ID_SUBTYPE", "OGRN"),
+            ("NATIONAL_ID_SUBTYPE", "OGRNIP"),
             ("NATIONAL_ID_NUMBER", None),
             ("NATIONAL_ID_COUNTRY", "RU"),
         ],
@@ -927,9 +927,43 @@ ID_DOC_MAPPINGS = {
         "name": "Global Intermediary Identification Number",
         "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
         "instructions": [
-            ("OTHER_ID_TYPE", "giiNumber"),
+            ("OTHER_ID_TYPE", "GIIN"),
             ("OTHER_ID_NUMBER", None),
             ("OTHER_ID_COUNTRY", None),
+        ],
+    },
+    1483: {
+        "name": "Tarjeta de Identidad",
+        "group": "NATIONAL IDENTIFIERS (Country-issued unique per person/org)",
+        "instructions": [
+            ("NATIONAL_ID_NUMBER", None),
+            ("NATIONAL_ID_COUNTRY", None),
+        ],
+    },
+    2883: {
+        "name": "Entity Code",
+        "group": "PAYLOAD - entity code of unknown issuing scheme (pending a crosswalk entry)",
+        "payload": True,
+        "instructions": [
+            ("ENTITY_CODE", None),
+        ],
+    },
+    2897: {
+        "name": "Standard Carrier Alpha Code (SCAC)",
+        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "instructions": [
+            ("OTHER_ID_TYPE", "SCAC"),
+            ("OTHER_ID_NUMBER", None),
+            ("OTHER_ID_COUNTRY", "US"),
+        ],
+    },
+    2900: {
+        "name": "Codigo Alfanumerico Armonizado del Transportista (CAAT)",
+        "group": "OTHER IDENTIFIERS (Specialized/Unknown codes)",
+        "instructions": [
+            ("OTHER_ID_TYPE", "CAAT"),
+            ("OTHER_ID_NUMBER", None),
+            ("OTHER_ID_COUNTRY", "MX"),
         ],
     },
 }

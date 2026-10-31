@@ -77,7 +77,11 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
     <FeatureTypeValues>
       <FeatureType ID="8">Birthdate</FeatureType>
       <FeatureType ID="10">Nationality Country</FeatureType>
+      <FeatureType ID="1">Vessel Call Sign</FeatureType>
+      <FeatureType ID="3">Vessel Flag</FeatureType>
+      <FeatureType ID="26">Title</FeatureType>
       <FeatureType ID="99001">Website Note</FeatureType>
+      <FeatureType ID="99003">Digital Currency Address - FOO</FeatureType>
     </FeatureTypeValues>
     <IDRegDocTypeValues>
       <IDRegDocType ID="1571">Passport</IDRegDocType>
@@ -85,6 +89,11 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
       <IDRegDocType ID="91508">Chinese Commercial Code</IDRegDocType>
       <IDRegDocType ID="92772">Russian State Individual Business Registration Number Pattern (OGRNIP)</IDRegDocType>
       <IDRegDocType ID="92883">Entity Code</IDRegDocType>
+      <IDRegDocType ID="99883">Mystery Code</IDRegDocType>
+      <IDRegDocType ID="1596">Tax ID No.</IDRegDocType>
+      <IDRegDocType ID="92897">Standard Carrier Alpha Code (SCAC)</IDRegDocType>
+      <IDRegDocType ID="1626">Vessel Registration Identification</IDRegDocType>
+      <IDRegDocType ID="91264">MMSI</IDRegDocType>
     </IDRegDocTypeValues>
     <ListValues><List ID="1550">SDN List</List></ListValues>
     <SanctionsTypeValues>
@@ -115,6 +124,12 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
     {_doc(5, 1571, 101, "P123", country_id=12)}
     {_doc(6, 92772, 201, "304500116000157", country_id=11)}
     {_doc(7, 92883, 201, "E-1", country_id=11)}
+    {_doc(8, 99883, 201, "M-1", country_id=11)}
+    {_doc(9, 1596, 201, "7701234567", country_id=11)}
+    {_doc(10, 1596, 101, "EG-TAX-1", country_id=12)}
+    {_doc(11, 92897, 201, "TLOJ")}
+    {_doc(12, 1626, 401, "IMO 9187629")}
+    {_doc(13, 91264, 401, "572469210")}
   </IDRegDocuments>
   <DistinctParties>
     <DistinctParty FixedRef="1001"><Profile ID="1001" PartySubTypeID="4">
@@ -130,6 +145,7 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
       {_feature(3, 8, _detail("10 Dec 1948"))}
       {_feature(4, 8, _MULTI_YEAR_PERIOD)}
       {_feature(2, 10, '<VersionLocation LocationID="500"/>')}
+      {_feature(5, 26, _detail("Member of the State Duma"))}
     </Profile></DistinctParty>
     <DistinctParty FixedRef="2001"><Profile ID="2001" PartySubTypeID="3">
       <Identity ID="201" Primary="true">{_alias("CIMEX, S.A.")}
@@ -147,9 +163,15 @@ FIXTURE = f"""<?xml version="1.0" encoding="utf-8"?>
       {_feature(17, 504, _detail("Section 1(b)"))}
       {_feature(18, 504, '<VersionDetail DetailTypeID="1431" DetailReferenceID="92084"/>')}
       {_feature(13, 99001, _detail("note-77"))}
+      {_feature(19, 99003, _detail("0xabc"))}
       {_feature(14, 99002, "")}
       {_feature(15, 646, "<DatePart><Year>1991</Year><Month>11</Month><Day>19</Day></DatePart>")}
       {_feature(16, "x", "")}
+    </Profile></DistinctParty>
+    <DistinctParty FixedRef="4001"><Profile ID="4001" PartySubTypeID="1">
+      <Identity ID="401" Primary="true">{_alias("ARTAVIL")}</Identity>
+      {_feature(40, 1, _detail("T2EU4"))}
+      {_feature(41, 3, _detail("Panama"))}
     </Profile></DistinctParty>
     <DistinctParty FixedRef="3001"><Profile ID="3001" PartySubTypeID="9">
       <Identity ID="301" Primary="true">{_alias("UNKNOWN KIND")}</Identity>
@@ -180,7 +202,7 @@ def _records(tmp_path):
     transformer = StrictOFACTransformer()
     transformer.load(xml_path)
     stats = transformer.transform(output_jsonl=out)
-    assert stats["processed"] == stats["emitted"] == 3
+    assert stats["processed"] == stats["emitted"] == 4
     return {r["RECORD_ID"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
 
 
@@ -208,11 +230,11 @@ def test_identifier_documents_are_features(records):
 
 
 def test_ogrnip_emits_registration_number_and_subtype(records):
-    """OGRNIP (feed 92772, matched by name) -> NATIONAL_ID REGISTRATION_NUMBER + NATIONAL_ID_SUBTYPE=OGRN."""
+    """OGRNIP (feed 92772, matched by name) -> NATIONAL_ID REGISTRATION_NUMBER + NATIONAL_ID_SUBTYPE=OGRNIP."""
     (feature,) = _features_with(records["2001"], "NATIONAL_ID_NUMBER")
     assert feature == {
         "NATIONAL_ID_TYPE": "REGISTRATION_NUMBER",
-        "NATIONAL_ID_SUBTYPE": "OGRN",
+        "NATIONAL_ID_SUBTYPE": "OGRNIP",
         "NATIONAL_ID_NUMBER": "304500116000157",
         "NATIONAL_ID_COUNTRY": "RU",
     }
@@ -220,9 +242,41 @@ def test_ogrnip_emits_registration_number_and_subtype(records):
 
 def test_unmapped_document_type_falls_back_to_other_id(records):
     """A document type with no mapping by ID or name becomes OTHER_ID typed by its sanitized feed label."""
-    assert {"OTHER_ID_TYPE": "ENTITY_CODE", "OTHER_ID_NUMBER": "E-1", "OTHER_ID_COUNTRY": "RU"} in records["2001"][
+    assert {"OTHER_ID_TYPE": "MYSTERY_CODE", "OTHER_ID_NUMBER": "M-1", "OTHER_ID_COUNTRY": "RU"} in records["2001"][
         "FEATURES"
     ]
+
+
+def test_every_record_carries_its_uid_as_ofac_id(records):
+    """The SDN uid is RECORD_ID and also the OFAC_ID feature, so other sources citing the uid bridge to it."""
+    for record_id, record in records.items():
+        assert record["DATA_SOURCE"] == "OFAC_ADVANCED"
+        assert _features_with(record, "OFAC_ID") == [{"OFAC_ID": record_id}]
+
+
+def test_russian_tax_id_is_inn_other_tax_ids_untyped(records):
+    """ "Tax ID No." issued by Russia is the INN (type_by_country); issued elsewhere it stays untyped."""
+    assert _features_with(records["2001"], "TAX_ID_NUMBER") == [
+        {"TAX_ID_NUMBER": "7701234567", "TAX_ID_COUNTRY": "RU", "TAX_ID_TYPE": "INN"}
+    ]
+    assert _features_with(records["1001"], "TAX_ID_NUMBER") == [{"TAX_ID_NUMBER": "EG-TAX-1", "TAX_ID_COUNTRY": "EG"}]
+
+
+def test_vessel_identifiers_use_dedicated_features_and_flag_is_payload(records):
+    """IMO / MMSI / call sign -> their own features; the flag (a country shared by many vessels) -> payload."""
+    vessel = records["4001"]
+    assert {"IMO_NUMBER": "IMO 9187629"} in vessel["FEATURES"]
+    assert {"MMSI_NUMBER": "572469210"} in vessel["FEATURES"]
+    assert {"CALL_SIGN": "T2EU4"} in vessel["FEATURES"]
+    assert vessel["VESSEL_FLAG"] == "Panama"
+    assert not _features_with(vessel, "OTHER_ID_TYPE")
+
+
+def test_title_is_payload_not_a_name_part(records):
+    """OFAC's Title is a position held; a separate NAME_PREFIX object would fragment the name feature."""
+    person = records["1001"]
+    assert person["TITLE"] == "Member of the State Duma"
+    assert not _features_with(person, "NAME_PREFIX")
 
 
 def test_names_follow_record_type(records):
@@ -310,7 +364,7 @@ def test_main_writes_jsonl(tmp_path):
     xml_path.write_text(FIXTURE, encoding="utf-8")
     out = tmp_path / "cli.jsonl"
     assert main([str(xml_path), "--output-jsonl", str(out)]) == 0
-    assert len(out.read_text(encoding="utf-8").splitlines()) == 3
+    assert len(out.read_text(encoding="utf-8").splitlines()) == 4
 
 
 def test_organization_features_payload_and_fallbacks(records):
@@ -321,8 +375,11 @@ def test_organization_features_payload_and_fallbacks(records):
     assert org["SECONDARY_SANCTIONS_RISK"] == "Yes; Section 1(b)"  # repeated feature, distinct values kept
     assert _features_with(org, "OTHER_ID_TYPE") == [
         {"OTHER_ID_TYPE": "WEBSITE_NOTE", "OTHER_ID_NUMBER": "note-77"},
-        {"OTHER_ID_TYPE": "ENTITY_CODE", "OTHER_ID_NUMBER": "E-1", "OTHER_ID_COUNTRY": "RU"},
+        {"OTHER_ID_TYPE": "CRYPTO_FOO", "OTHER_ID_NUMBER": "0xabc"},
+        {"OTHER_ID_TYPE": "MYSTERY_CODE", "OTHER_ID_NUMBER": "M-1", "OTHER_ID_COUNTRY": "RU"},
+        {"OTHER_ID_TYPE": "SCAC", "OTHER_ID_NUMBER": "TLOJ", "OTHER_ID_COUNTRY": "US"},
     ]
+    assert org["ENTITY_CODE"] == "E-1"  # OFAC's Entity Code: payload, not an identifier
     assert _features_with(org, "REGISTRATION_DATE") == [{"REGISTRATION_DATE": "1991-11-19"}]
     names = {f["NAME_ORG"]: f["NAME_TYPE"] for f in _features_with(org, "NAME_ORG")}
     assert names == {"CIMEX, S.A.": "PRIMARY", "CIMEX OLD": "FKA", "CIMEX ODD": "AKA", "CIMEX BARE": "AKA"}

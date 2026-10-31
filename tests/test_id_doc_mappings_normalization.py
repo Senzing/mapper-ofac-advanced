@@ -3,16 +3,18 @@
 What the mapping emits (these tests assert each point):
 
 * The business-registration family collapses to ``NATIONAL_ID_TYPE=REGISTRATION_NUMBER``.
-* OGRNIP is ``NATIONAL_ID_TYPE=REGISTRATION_NUMBER`` plus ``NATIONAL_ID_SUBTYPE=OGRN`` (the subtype is
-  not in the default Senzing config yet; see the note on entry 2772).
+* OGRNIP is ``NATIONAL_ID_TYPE=REGISTRATION_NUMBER`` plus ``NATIONAL_ID_SUBTYPE=OGRNIP`` (the subtype is
+  registered by src/ofac_config_updates.gtc; see the note on entry 2772).
 * Named person schemes carry an upper-case scheme token (``CURP``, ``DNI``, ``CEDULA``, ...); generic
   "national id" labels carry no ``NATIONAL_ID_TYPE`` (the feature already declares the class).
 * Tax identifiers live on ``TAX_ID``: a generic tax number has no ``TAX_ID_TYPE``; VAT is
-  ``TAX_ID_TYPE=VAT``. CUIT stays on ``NATIONAL_ID`` (``NATIONAL_ID_TYPE=CUIT``).
+  ``TAX_ID_TYPE=VAT``; CUIT is ``TAX_ID_TYPE=CUIT`` (AR); a Russian "Tax ID No." is ``TAX_ID_TYPE=INN``.
 * LEIs route to the ``LEI_NUMBER`` feature.
-* Many-per-entity or reissued documents (licenses, permits, trademarks, serials) stay on the
-  non-exclusive ``OTHER_ID`` feature.
-* Chinese Commercial Code and Government Gazette Number are marked ``"payload": True`` (not identifiers).
+* IMO and MMSI route to the dedicated ``IMO_NUMBER`` / ``MMSI_NUMBER`` features.
+* Many-per-entity or reissued documents (licenses, permits, electoral, ...) stay on the non-exclusive
+  ``OTHER_ID`` feature with a canonical crosswalk token.
+* Chinese Commercial Code, Government Gazette Number, Serial No., Trademark number, Branch Unit Number and
+  Entity Code are marked ``"payload": True`` (not identifiers under a known scheme).
 * ``group`` is descriptive only and must agree with where the instructions route.
 """
 
@@ -60,19 +62,21 @@ def test_registration_family_collapses_to_registration_number():
         2121,
         1588,
         1594,
+        1835,  # File Number: a US state (e.g. Delaware) / Czech company file number is its registration
     ):
         instr = _instr(id_)
         assert instr.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER", id_
         assert "NATIONAL_ID_NUMBER" in instr, id_
 
 
-def test_ogrnip_carries_ogrn_code():
+def test_ogrnip_carries_ogrnip_subtype():
     # OGRNIP is one of several RU registration registries and a source may only know the broad
-    # registration number, so it is TYPE=REGISTRATION_NUMBER + SUBTYPE=OGRN (NATIONAL_ID_SUBTYPE,
+    # registration number, so it is TYPE=REGISTRATION_NUMBER + SUBTYPE=OGRNIP (NATIONAL_ID_SUBTYPE,
     # Senzing GDEV-4439) rather than a distinct top-level type that would fragment the namespace.
     instr = _instr(2772)
     assert instr.get("NATIONAL_ID_TYPE") == "REGISTRATION_NUMBER"
-    assert instr.get("NATIONAL_ID_SUBTYPE") == "OGRN"
+    assert instr.get("NATIONAL_ID_SUBTYPE") == "OGRNIP"
+    assert instr.get("NATIONAL_ID_COUNTRY") == "RU"
 
 
 def test_feature_class_unified_no_other_id_registration_leftovers():
@@ -158,10 +162,23 @@ def test_tax_schemes_route_to_tax_id_blank_type():
         assert "TAX_ID_NUMBER" in instr, id_
 
 
-def test_cuit_is_national_id_not_tax():
-    # CUIT is Argentina's universal identifier (used well beyond tax); OpenSanctions AND Sayari both
-    # classify it NATIONAL_ID, not TAX_ID.
-    assert _instr(1595).get("NATIONAL_ID_TYPE") == "CUIT"
+def test_cuit_is_tax_id_type_cuit_argentina():
+    # CUIT (Clave Unica de Identificacion Tributaria) is Argentina's tax id: the crosswalk vocabulary puts it
+    # on TAX_ID with TAX_ID_TYPE=CUIT, country AR.
+    assert _instr(1595) == {"TAX_ID_TYPE": "CUIT", "TAX_ID_NUMBER": None, "TAX_ID_COUNTRY": "AR"}
+
+
+def test_russian_tax_id_no_is_inn_by_issuer():
+    # The generic "Tax ID No." label names a scheme only together with its issuer: Russian -> INN.
+    assert ID_DOC_MAPPINGS[1596]["type_by_country"] == {"RU": "INN"}
+    for id_, entry in ID_DOC_MAPPINGS.items():
+        for token in entry.get("type_by_country", {}).values():
+            assert token == token.upper(), id_
+
+
+def test_vessel_ids_route_to_dedicated_features():
+    assert _instr(1626) == {"IMO_NUMBER": None}
+    assert _instr(1264) == {"MMSI_NUMBER": None}
 
 
 def test_vat_routes_to_tax_id_type_vat():
@@ -174,27 +191,50 @@ def test_vat_routes_to_tax_id_type_vat():
 
 
 def test_shared_or_many_per_entity_stay_non_exclusive_other_id():
+    # Canonical crosswalk tokens (LICENSE, PERMIT, ...), never a per-source spelling (licenseNumber, ...).
     expected = {
-        1236: "licenseNumber",
-        1504: "licenseNumber",
-        1615: "licenseNumber",
-        1621: "licenseNumber",
-        1639: "licenseNumber",
-        1812: "licenseNumber",
-        2158: "trademarkNumber",
-        2159: "permitNumber",
-        1593: "serialNumber",
-        1835: "fileNumber",
+        1236: "LICENSE",
+        1504: "LICENSE",
+        1615: "LICENSE",
+        1621: "LICENSE",
+        1639: "LICENSE",
+        1812: "LICENSE",
+        2159: "PERMIT",
+        1484: "PERMIT",
+        1590: "ELECTORAL",
+        1607: "ELECTORAL",
+        1712: "ELECTORAL",
+        2728: "MILITARY_SERVICE",
+        1635: "RESIDENCY",
+        1598: "IMMIGRATION",
+        1623: "AIRCRAFT_MSN",
+        2790: "GIIN",
+        2897: "SCAC",
+        2900: "CAAT",
     }
     for id_, typ in expected.items():
         assert _instr(id_).get("OTHER_ID_TYPE") == typ, id_
+
+
+def test_other_id_tokens_are_upper_case():
+    for id_, entry in ID_DOC_MAPPINGS.items():
+        token = dict(entry["instructions"]).get("OTHER_ID_TYPE")
+        if token is not None:
+            assert token == token.upper(), id_
 
 
 def test_non_identifier_codes_route_to_payload():
     # Chinese Commercial Code (a name telegraph-encoding, shared by same-named entities) and Government
     # Gazette Number (a shared publication reference) are not entity identifiers -> the explicit
     # "payload" key, a single non-feature attribute, so the mapper keeps them off the FEATURES path.
-    for id_, attr in ((1508, "CHINESE_COMMERCIAL_CODE"), (1636, "GOVERNMENT_GAZETTE_NUMBER")):
+    for id_, attr in (
+        (1508, "CHINESE_COMMERCIAL_CODE"),
+        (1636, "GOVERNMENT_GAZETTE_NUMBER"),
+        (1593, "SERIAL_NUMBER"),
+        (2158, "TRADEMARK_NUMBER"),
+        (1719, "BRANCH_UNIT_NUMBER"),
+        (2883, "ENTITY_CODE"),
+    ):
         entry = ID_DOC_MAPPINGS[id_]
         assert entry.get("payload") is True, id_
         instr = entry["instructions"]
@@ -203,9 +243,9 @@ def test_non_identifier_codes_route_to_payload():
 
 
 def test_payload_key_only_on_non_identifiers():
-    # "payload" is the only routing switch: it is a bool, set on exactly the two non-identifier types.
+    # "payload" is the only routing switch: it is a bool, set on exactly the non-identifier types.
     payload_ids = {id_ for id_, entry in ID_DOC_MAPPINGS.items() if entry.get("payload") is True}
-    assert payload_ids == {1508, 1636}
+    assert payload_ids == {1508, 1636, 1593, 2158, 1719, 2883}
     for id_, entry in ID_DOC_MAPPINGS.items():
         assert entry.get("payload", False) in (True, False), id_
 
@@ -224,7 +264,7 @@ def _route(entry):
     attrs = dict(entry["instructions"])
     if entry.get("payload") is True:
         return "PAYLOAD"
-    if any(a.startswith(("PASSPORT_", "SSN_", "DRIVERS_LICENSE_", "LEI_")) for a in attrs):
+    if any(a.startswith(("PASSPORT_", "SSN_", "DRIVERS_LICENSE_", "LEI_", "IMO_", "MMSI_")) for a in attrs):
         return "SPECIFIC"
     if any(a.startswith("TAX_ID_") for a in attrs):
         return "TAX_ID"

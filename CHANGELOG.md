@@ -27,6 +27,19 @@ Behavior changes to the emitted JSON; re-map and reload to pick them up.
 - Chinese Commercial Code and Government Gazette Number are top-level payload attributes, not identifiers;
   several values for one party are joined with `"; "`.
 
+- Identifiers conform to the Senzing identifier crosswalk vocabulary: every record carries `OFAC_ID` (the
+  SDN uid, also its `RECORD_ID`); IMO, MMSI, call signs and ISINs use the `IMO_NUMBER`, `MMSI_NUMBER`,
+  `CALL_SIGN` and `ISIN_NUMBER` features; `OTHER_ID` types are the canonical tokens (`LICENSE`, `PERMIT`,
+  `SWIFT_BIC`, `GIIN`, `AIRCRAFT_MSN`, `AIRCRAFT_TAIL`, `ELECTORAL`, `MILITARY_SERVICE`, `RESIDENCY`,
+  `IMMIGRATION`, `SCAC`, `CAAT`, `CRYPTO_<ASSET>`); CUIT is `TAX_ID_TYPE=CUIT` (AR); a Russian "Tax ID No." is
+  `TAX_ID_TYPE=INN`; OGRNIP's subtype is `OGRNIP`; File Number is a `REGISTRATION_NUMBER`.
+- Values that do not identify the entity are top-level payload, not identifiers: vessel flags, Title (a
+  position held; was a separate `NAME_PREFIX` that fragmented the name), UN/LOCODE, equity ticker, MICEX code,
+  PAIPA text, Serial No., Trademark number, Branch Unit Number, Entity Code.
+- `src/ofac_config_updates.gtc` now registers the custom features (`OFAC_ID`, `IMO_NUMBER`, `MMSI_NUMBER`,
+  `CALL_SIGN`, `ISIN_NUMBER`) and `NATIONAL_ID_SUBTYPE`; the `TAX_ID_TYPE` commands for older engine configs
+  moved to `src/ofac_config_updates_tax_id_type.gtc`.
+
 ### Removed in Unreleased
 
 - The unreachable person-name part parsing (`NAME_PART_MAP`, codes 1480-1484; the feed's name parts carry no

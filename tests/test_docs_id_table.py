@@ -17,7 +17,17 @@ _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
 ID_DOC_MAPPINGS = _mod.ID_DOC_MAPPINGS
 
-_FEATURE_PREFIXES = ("NATIONAL_ID", "TAX_ID", "OTHER_ID", "PASSPORT", "SSN", "DRIVERS_LICENSE", "LEI")
+_FEATURE_PREFIXES = (
+    "NATIONAL_ID",
+    "TAX_ID",
+    "OTHER_ID",
+    "PASSPORT",
+    "SSN",
+    "DRIVERS_LICENSE",
+    "LEI",
+    "IMO_NUMBER",
+    "MMSI_NUMBER",
+)
 
 
 def _row(id_, entry):
@@ -25,8 +35,11 @@ def _row(id_, entry):
     if entry.get("payload") is True:
         feature = "payload " + ", ".join(f"`{a}`" for a in attrs)
     else:
-        feature = next(f"`{p}`" for p in _FEATURE_PREFIXES if any(a.startswith(p + "_") for a in attrs))
+        feature = next(f"`{p}`" for p in _FEATURE_PREFIXES if any(a == p or a.startswith(p + "_") for a in attrs))
     typ = next((f"`{v}`" for a, v in attrs.items() if a.endswith("_TYPE") and v is not None), "-")
+    by_country = entry.get("type_by_country", {})
+    if by_country:
+        typ = ", ".join(f"`{v}` if {k}" for k, v in sorted(by_country.items())) + ("" if typ == "-" else f"; {typ}")
     subtype = next((f"`{v}`" for a, v in attrs.items() if a.endswith("_SUBTYPE") and v is not None), "-")
     country = next((f"`{v}`" for a, v in attrs.items() if a.endswith("_COUNTRY") and v is not None), "-")
     return f"| {id_} | {entry['name']} | {feature} | {typ} | {subtype} | {country} |"

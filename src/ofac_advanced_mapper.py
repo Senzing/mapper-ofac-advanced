@@ -89,6 +89,9 @@ DATE_ATTRS = {
 
 EMAIL_ATTRS = {"EMAIL_ADDRESS"}
 
+# OFAC's label for a digital-currency address feature, e.g. "Digital Currency Address - XBT".
+CRYPTO_FEATURE_NAME = re.compile(r"^Digital Currency Address - ([A-Za-z0-9]+)$")
+
 # Sanity cap on a DatePeriod that spans several years (each year is emitted as its own date). The longest span
 # on the 2026-10-02 SDN file is 9 years; a longer one is treated as malformed (see _span_years).
 MAX_DATE_SPAN_YEARS = 20
@@ -330,6 +333,9 @@ class StrictOFACTransformer:
             return None
 
         self._add_record_type(record, profile)
+        # The SDN uid is also an identifier in its own right: other sources (e.g. OpenSanctions) cite it, and
+        # emitting it as the OFAC_ID feature lets them bridge to this record. RECORD_ID stays the uid as well.
+        record["FEATURES"].append({"OFAC_ID": fixed_ref})
         self._add_names(record, party, is_person=self._is_person(record))
 
         max_reliability = self._add_features(record, party)
@@ -546,7 +552,11 @@ class StrictOFACTransformer:
         if not text_value:
             return None
         feature_name = self.feature_type_lookup.get(str(feature_type_id), f"FEATURE_{feature_type_id}")
-        type_value = re.sub(r"[^A-Z0-9]+", "_", feature_name.upper()).strip("_") or feature_name
+        crypto = CRYPTO_FEATURE_NAME.match(feature_name)
+        if crypto:  # a currency added to the feed after these tables: same CRYPTO_<ASSET> token as the rest
+            type_value = "CRYPTO_" + crypto.group(1).upper()
+        else:
+            type_value = re.sub(r"[^A-Z0-9]+", "_", feature_name.upper()).strip("_") or feature_name
         return {
             "OTHER_ID_TYPE": type_value,
             "OTHER_ID_NUMBER": text_value,
@@ -614,6 +624,7 @@ class StrictOFACTransformer:
                         feature_obj[attr] = self._sanitize_identifier_name(mapping["name"])
                     else:
                         feature_obj[attr] = doc_number
+                self._add_type_by_country(feature_obj, mapping, country)
 
                 if feature_obj:
                     # A doc type marked "payload" is not an entity identifier (e.g. a name
@@ -625,6 +636,20 @@ class StrictOFACTransformer:
                             self._append_payload_value(record, key, value)
                     else:
                         record["FEATURES"].append(feature_obj)
+
+    @staticmethod
+    def _add_type_by_country(feature_obj: Dict[str, object], mapping: Dict, country: Optional[str]) -> None:
+        """Type a document whose scheme follows from its label plus its issuing country.
+
+        A mapping's optional "type_by_country" ({country: TYPE token}) names the scheme a generic label means
+        for one issuer (a Russian "Tax ID No." is the INN). The token goes on the feature's own *_TYPE.
+        """
+        token = mapping.get("type_by_country", {}).get(country) if country else None
+        if not token:
+            return
+        number_attr = next((a for a in feature_obj if a.endswith("_NUMBER")), None)
+        if number_attr:
+            feature_obj[number_attr[: -len("_NUMBER")] + "_TYPE"] = token
 
     @staticmethod
     def _append_payload_value(record: Dict, key: str, value: object) -> None:
