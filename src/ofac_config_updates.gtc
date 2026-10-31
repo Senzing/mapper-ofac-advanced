@@ -1,0 +1,30 @@
+# Senzing configuration updates for the OFAC advanced mapper: the features the mapper emits that are not in
+# the default Senzing config. Without them these attributes are ignored at load.
+#
+# Apply with:  sz_configtool -f src/ofac_config_updates.gtc
+#
+# Verified with sz_configtool against the Senzing 4.4.3 default config (every command succeeds and the
+# configuration is saved). sz_configtool does not save when any command fails, so on a config that already
+# has one of these (e.g. a future default config with NATIONAL_ID_SUBTYPE), drop that command first.
+# An engine config older than TAX_ID_TYPE also needs src/ofac_config_updates_tax_id_type.gtc.
+#
+# Identifier features (canonical names from the Senzing identifier crosswalk), template GLOBAL_ID, F1E
+# (one entity per value; different values are not forced apart):
+#   OFAC_ID      the SDN uid on every record, so other sources that cite it (OpenSanctions) bridge to it
+#   IMO_NUMBER   vessel / company IMO number ("Vessel Registration Identification")
+#   MMSI_NUMBER  Maritime Mobile Service Identity
+#   CALL_SIGN    vessel call sign ("Vessel Call Sign", "Other Vessel Call Sign")
+#   ISIN_NUMBER  ISIN
+templateAdd               {"feature": "OFAC_ID", "template": "GLOBAL_ID", "behavior": "F1E"}
+templateAdd               {"feature": "IMO_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
+templateAdd               {"feature": "MMSI_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
+templateAdd               {"feature": "CALL_SIGN", "template": "GLOBAL_ID", "behavior": "F1E"}
+templateAdd               {"feature": "ISIN_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
+
+# NATIONAL_ID_SUBTYPE: the sub-registry under a broad NATIONAL_ID_TYPE (OGRNIP under REGISTRATION_NUMBER).
+# Same three steps as TAX_ID_TYPE: store the element on the feature, score it in the comparison call, map the
+# attribute. A blank subtype on one side still matches a populated one (Senzing GDEV-4439).
+addElementToFeature       {"feature": "NATIONAL_ID", "element": "ID_SUBTYPE", "derived": "No", "display": 1}
+addComparisonCallElement  {"feature": "NATIONAL_ID", "element": "ID_SUBTYPE"}
+addAttribute              {"attribute": "NATIONAL_ID_SUBTYPE", "class": "IDENTIFIER", "feature": "NATIONAL_ID", "element": "ID_SUBTYPE", "required": "No"}
+save
