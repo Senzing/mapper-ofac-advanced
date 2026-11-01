@@ -54,10 +54,11 @@ Behavior changes to the emitted JSON; re-map and reload to pick them up.
 
 ### Added in Unreleased
 
-- `src/ofac_config_updates.gtc`: adds `TAX_ID_TYPE` to a Senzing config that predates it
-  (`sz_configtool -f src/ofac_config_updates.gtc`).
-- `NATIONAL_ID_SUBTYPE=OGRN` for OGRNIP. The attribute is not in the default config yet; until it is
-  registered (future default config, or by the user) the value is ignored at load.
+- `src/ofac_config_updates.gtc` (`sz_configtool -f src/ofac_config_updates.gtc`): registers the custom
+  features and `NATIONAL_ID_SUBTYPE`; `src/ofac_config_updates_tax_id_type.gtc` adds `TAX_ID_TYPE` to a Senzing
+  config that predates it.
+- `NATIONAL_ID_SUBTYPE=OGRNIP` for OGRNIP (registered by `src/ofac_config_updates.gtc`; ignored at load
+  without it).
 - pytest suite under `tests/`.
 
 ## [1.0.0] - yyyy-mm-dd
