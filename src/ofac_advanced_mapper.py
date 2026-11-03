@@ -335,11 +335,9 @@ class StrictOFACTransformer:
         self._add_record_type(record, profile)
         # The SDN uid is also an identifier in its own right: other sources (e.g. OpenSanctions) cite it, and
         # emitting it as the OFAC_ID feature lets them bridge to this record. RECORD_ID stays the uid as well.
-        # REF_OFAC_ID asserts the same uid a second time as an A1ES (exclusive, stable) feature, carried only by
-        # this source's own records: two SDN parties always hold different uids, so they can never co-resolve,
-        # however many other features or citing records point at both.
+        # No REF_OFAC_ID (A1ES) twin: the SDN list sometimes carries one real-world party as several uids, and a
+        # source that consolidates them (OpenSanctions) must be able to bring those records together.
         record["FEATURES"].append({"OFAC_ID": fixed_ref})
-        record["FEATURES"].append({"REF_OFAC_ID": fixed_ref})
         self._add_names(record, party, is_person=self._is_person(record))
 
         max_reliability = self._add_features(record, party)

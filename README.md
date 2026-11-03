@@ -62,9 +62,8 @@ tooling such as `black`, `flake8`, and `pytest` are listed in
 4. Load the emitted JSONL into Senzing or feed it into downstream tooling as
    needed. Senzing config prerequisite: apply
    `sz_configtool -f src/ofac_config_updates.gtc` before loading. It registers
-   the custom features the mapper emits (`OFAC_ID`, `REF_OFAC_ID`,
-   `IMO_NUMBER`, `MMSI_NUMBER`, `CALL_SIGN`, `ISIN_NUMBER`) and
-   `NATIONAL_ID_SUBTYPE`;
+   the custom features the mapper emits (`OFAC_ID`, `IMO_NUMBER`,
+   `MMSI_NUMBER`, `CALL_SIGN`, `ISIN_NUMBER`) and `NATIONAL_ID_SUBTYPE`;
    without it those attributes are ignored at load. The mapper also emits
    `TAX_ID_TYPE`, which Senzing 4.4's default config has; for an engine whose
    config predates it, also apply `src/ofac_config_updates_tax_id_type.gtc`.

@@ -28,8 +28,8 @@ Behavior changes to the emitted JSON; re-map and reload to pick them up.
   several values for one party are joined with `"; "`.
 
 - Identifiers conform to the Senzing identifier crosswalk vocabulary: every record carries `OFAC_ID` (the
-  SDN uid, also its `RECORD_ID`), compared exactly so neighbouring uids never score as close, and the same uid
-  as `REF_OFAC_ID`, an A1ES feature that keeps two SDN parties from ever resolving together; IMO, MMSI, call signs and ISINs use the `IMO_NUMBER`, `MMSI_NUMBER`,
+  SDN uid, also its `RECORD_ID`), compared exactly so neighbouring uids never score as close (no A1ES twin: one party can
+  hold several uids, which a consolidating source such as OpenSanctions brings together); IMO, MMSI, call signs and ISINs use the `IMO_NUMBER`, `MMSI_NUMBER`,
   `CALL_SIGN` and `ISIN_NUMBER` features; `OTHER_ID` types are the canonical tokens (`LICENSE`, `PERMIT`,
   `SWIFT_BIC`, `GIIN`, `AIRCRAFT_MSN`, `AIRCRAFT_TAIL`, `ELECTORAL`, `MILITARY_SERVICE`, `RESIDENCY`,
   `IMMIGRATION`, `SCAC`, `CAAT`, `CRYPTO_<ASSET>`); CUIT is `TAX_ID_TYPE=CUIT` (AR); a Russian "Tax ID No." is
