@@ -248,10 +248,12 @@ def test_unmapped_document_type_falls_back_to_other_id(records):
 
 
 def test_every_record_carries_its_uid_as_ofac_id(records):
-    """The SDN uid is RECORD_ID and also the OFAC_ID feature, so other sources citing the uid bridge to it."""
+    """The SDN uid is RECORD_ID, the OFAC_ID feature (so citing sources bridge to it) and REF_OFAC_ID (so two SDN
+    parties never co-resolve)."""
     for record_id, record in records.items():
         assert record["DATA_SOURCE"] == "OFAC_ADVANCED"
         assert _features_with(record, "OFAC_ID") == [{"OFAC_ID": record_id}]
+        assert _features_with(record, "REF_OFAC_ID") == [{"REF_OFAC_ID": record_id}]
 
 
 def test_russian_tax_id_is_inn_other_tax_ids_untyped(records):

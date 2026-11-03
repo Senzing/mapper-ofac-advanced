@@ -10,16 +10,22 @@
 #
 # Identifier features (canonical names from the Senzing identifier crosswalk), template GLOBAL_ID, F1E
 # (one entity per value; different values are not forced apart):
-#   OFAC_ID      the SDN uid on every record, so other sources that cite it (OpenSanctions) bridge to it
+#   OFAC_ID      the SDN uid on every record, so other sources that cite it (OpenSanctions) bridge to it.
+#                Compared EXACTLY: the template's default ID_COMP is fuzzy, and neighbouring uids (7321 vs
+#                7322) scored as close matches, so exclusivity never separated two SDN parties.
 #   IMO_NUMBER   vessel / company IMO number ("Vessel Registration Identification")
 #   MMSI_NUMBER  Maritime Mobile Service Identity
 #   CALL_SIGN    vessel call sign ("Vessel Call Sign", "Other Vessel Call Sign")
 #   ISIN_NUMBER  ISIN
-templateAdd               {"feature": "OFAC_ID", "template": "GLOBAL_ID", "behavior": "F1E"}
+templateAdd               {"feature": "OFAC_ID", "template": "GLOBAL_ID", "behavior": "F1E", "comparison": "EXACT_COMP"}
 templateAdd               {"feature": "IMO_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
 templateAdd               {"feature": "MMSI_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
 templateAdd               {"feature": "CALL_SIGN", "template": "GLOBAL_ID", "behavior": "F1E"}
 templateAdd               {"feature": "ISIN_NUMBER", "template": "GLOBAL_ID", "behavior": "F1E"}
+
+# REF_OFAC_ID: the record's OWN SDN uid again, as an A1ES (exclusive + stable) feature compared exactly. Only
+# OFAC records carry it and every SDN party has a distinct uid, so two parties are always forced apart.
+templateAdd               {"feature": "REF_OFAC_ID", "template": "GLOBAL_ID", "behavior": "A1ES", "comparison": "EXACT_COMP"}
 
 # NATIONAL_ID_SUBTYPE: the sub-registry under a broad NATIONAL_ID_TYPE (OGRNIP under REGISTRATION_NUMBER).
 # Same three steps as TAX_ID_TYPE: store the element on the feature, score it in the comparison call, map the
