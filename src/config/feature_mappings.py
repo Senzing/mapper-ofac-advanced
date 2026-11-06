@@ -2,8 +2,8 @@
 FEATURE_MAPPINGS = {
     1: {
         "name": "Vessel Call Sign",
-        "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "VESSEL_CALL_SIGN"), ("OTHER_ID_NUMBER", None)],
+        "section": "VESSEL/TRANSPORT IDENTIFIERS (Dedicated Senzing feature)",
+        "instructions": [("CALL_SIGN", None)],
     },
     2: {
         "name": "VESSEL TYPE",
@@ -12,8 +12,8 @@ FEATURE_MAPPINGS = {
     },
     3: {
         "name": "Vessel Flag",
-        "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "VESSEL_FLAG"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("VESSEL_FLAG", None)],
     },
     4: {
         "name": "Vessel Owner",
@@ -53,7 +53,7 @@ FEATURE_MAPPINGS = {
     13: {
         "name": "SWIFT/BIC",
         "section": "DIRECT SENZING MAPPINGS (High Confidence)",
-        "instructions": [("OTHER_ID_TYPE", "SWIFT"), ("OTHER_ID_NUMBER", None)],
+        "instructions": [("OTHER_ID_TYPE", "SWIFT_BIC"), ("OTHER_ID_NUMBER", None)],
     },
     14: {
         "name": "Website",
@@ -67,8 +67,8 @@ FEATURE_MAPPINGS = {
     },
     24: {
         "name": "Former Vessel Flag",
-        "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "FORMER_VESSEL_FLAG"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("FORMER_VESSEL_FLAG", None)],
     },
     25: {
         "name": "Location",
@@ -77,13 +77,13 @@ FEATURE_MAPPINGS = {
     },
     26: {
         "name": "Title",
-        "section": "DIRECT SENZING MAPPINGS (High Confidence)",
-        "instructions": [("NAME_PREFIX", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("TITLE", None)],
     },
     44: {
         "name": "Aircraft Construction Number",
         "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "AIRCRAFT_CONSTRUCTION"), ("OTHER_ID_NUMBER", None)],
+        "instructions": [("OTHER_ID_TYPE", "AIRCRAFT_MSN"), ("OTHER_ID_NUMBER", None)],
     },
     45: {
         "name": "Aircraft Manufacture Date",
@@ -108,7 +108,7 @@ FEATURE_MAPPINGS = {
     49: {
         "name": "Previous Aircraft Tail Number",
         "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "PREV_AIRCRAFT_TAIL"), ("OTHER_ID_NUMBER", None)],
+        "instructions": [("OTHER_ID_TYPE", "AIRCRAFT_TAIL"), ("OTHER_ID_NUMBER", None)],
     },
     50: {
         "name": "Aircraft Manufacturer's Serial Number",
@@ -133,7 +133,7 @@ FEATURE_MAPPINGS = {
     164: {
         "name": "BIK (RU)",
         "section": "FINANCIAL/MARKET IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "BIK"), ("OTHER_ID_NUMBER", None)],
+        "instructions": [("OTHER_ID_TYPE", "BIK"), ("OTHER_ID_NUMBER", None), ("OTHER_ID_COUNTRY", "RU")],
     },
     204: {
         "name": "Executive Order 13662 Directive",
@@ -143,13 +143,13 @@ FEATURE_MAPPINGS = {
     224: {"name": "Gender", "section": "DIRECT SENZING MAPPINGS (High Confidence)", "instructions": [("GENDER", None)]},
     264: {
         "name": "UN/LOCODE",
-        "section": "FINANCIAL/MARKET IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "LOCODE"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("UN_LOCODE", None)],
     },
     304: {
         "name": "MICEX Code",
-        "section": "FINANCIAL/MARKET IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "MICEX"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("MICEX_CODE", None)],
     },
     344: {
         "name": "Digital Currency Address - XBT",
@@ -178,13 +178,13 @@ FEATURE_MAPPINGS = {
     },
     424: {
         "name": "Other Vessel Flag",
-        "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "OTHER_VESSEL_FLAG"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("OTHER_VESSEL_FLAG", None)],
     },
     425: {
         "name": "Other Vessel Call Sign",
-        "section": "VESSEL/TRANSPORT IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "OTHER_CALL_SIGN"), ("OTHER_ID_NUMBER", None)],
+        "section": "VESSEL/TRANSPORT IDENTIFIERS (Dedicated Senzing feature)",
+        "instructions": [("CALL_SIGN", None)],
     },
     444: {
         "name": "Digital Currency Address - XMR",
@@ -273,13 +273,13 @@ FEATURE_MAPPINGS = {
     },
     766: {
         "name": "Equity Ticker",
-        "section": "FINANCIAL/MARKET IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "EQUITY_TICKER"), ("OTHER_ID_NUMBER", None)],
+        "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
+        "instructions": [("EQUITY_TICKER", None)],
     },
     806: {
         "name": "ISIN",
-        "section": "FINANCIAL/MARKET IDENTIFIERS (OTHER_ID Mapping)",
-        "instructions": [("OTHER_ID_TYPE", "ISIN"), ("OTHER_ID_NUMBER", None)],
+        "section": "FINANCIAL/MARKET IDENTIFIERS (Dedicated Senzing feature)",
+        "instructions": [("ISIN_NUMBER", None)],
     },
     826: {
         "name": "Target Type",
@@ -336,10 +336,20 @@ FEATURE_MAPPINGS = {
         "section": "DESCRIPTIVE ATTRIBUTES (Payload - Non-matching)",
         "instructions": [("VESSEL_BUILD_YEAR", None)],
     },
+    989: {
+        "name": "Digital Currency Address - BNB",
+        "section": "CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)",
+        "instructions": [("OTHER_ID_TYPE", "CRYPTO_BNB"), ("OTHER_ID_NUMBER", None)],
+    },
     992: {
         "name": "Digital Currency Address - TRX",
         "section": "CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)",
         "instructions": [("OTHER_ID_TYPE", "CRYPTO_TRX"), ("OTHER_ID_NUMBER", None)],
+    },
+    996: {
+        "name": "Digital Currency Address - DOGE",
+        "section": "CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)",
+        "instructions": [("OTHER_ID_TYPE", "CRYPTO_DOGE"), ("OTHER_ID_NUMBER", None)],
     },
     998: {
         "name": "Digital Currency Address - USDC",
@@ -355,5 +365,15 @@ FEATURE_MAPPINGS = {
         "name": "Digital Currency Address - BSC",
         "section": "CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)",
         "instructions": [("OTHER_ID_TYPE", "CRYPTO_BSC"), ("OTHER_ID_NUMBER", None)],
+    },
+    1167: {
+        "name": "Digital Currency Address - SOL",
+        "section": "CRYPTOCURRENCY ADDRESSES (OTHER_ID Mapping)",
+        "instructions": [("OTHER_ID_TYPE", "CRYPTO_SOL"), ("OTHER_ID_NUMBER", None)],
+    },
+    1187: {
+        "name": "PAIPA Section 2 Information",
+        "section": "PAYLOAD ATTRIBUTES (Root Level - Sanctions Specific)",
+        "instructions": [("PAIPA_SECTION_2_INFO", None)],
     },
 }
