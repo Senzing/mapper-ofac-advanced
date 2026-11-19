@@ -2,10 +2,12 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Aboud",
     "analysing",
     "applehelp",
     "autodoc",
     "autodocsumm",
+    "Azul",
     "bugtracker",
     "CAATSA",
     "Cartilla",
@@ -70,7 +72,8 @@
     "USCC",
     "USCCC",
     "venv",
-    "virtualenv"
+    "virtualenv",
+    "Zumar"
   ],
   "ignorePaths": [
     ".git/**",
