@@ -81,5 +81,5 @@ When `instructions` contains `None` as the second tuple element, the value is ex
 
 - **Line length**: 120 characters (Black default with custom line-length)
 - **Formatter**: Black with isort (profile: black)
-- **Python**: 3.10+ required
+- **Python**: 3.11+ required
 - **XML parsing**: Uses `lxml` when available for performance, falls back to stdlib `xml.etree.ElementTree`
