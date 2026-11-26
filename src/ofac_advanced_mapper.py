@@ -333,7 +333,7 @@ class StrictOFACTransformer:
             return None
 
         self._add_record_type(record, profile)
-        self._add_names(record, party)
+        self._add_names(record, party, is_person=self._is_person(record))
 
         max_reliability = self._add_features(record, party)
         self._add_identity_documents(record, party)
@@ -363,7 +363,18 @@ class StrictOFACTransformer:
         if record_type:
             record["FEATURES"].append({"RECORD_TYPE": record_type})
 
-    def _add_names(self, record: Dict, party: ET.Element) -> None:
+    @staticmethod
+    def _is_person(record: Dict) -> bool:
+        """True when the record's RECORD_TYPE feature is PERSON."""
+        return any(f.get("RECORD_TYPE") == "PERSON" for f in record["FEATURES"])
+
+    def _add_names(self, record: Dict, party: ET.Element, *, is_person: bool) -> None:
+        """Add one name feature per documented name.
+
+        A person's name is NAME_FULL (plus its parsed parts); every other
+        record type (organization, vessel, aircraft) is an organization-style
+        name, NAME_ORG, with no parsed parts.
+        """
         for alias in party.findall(".//ofac:Alias", NS):
             is_primary = alias.get("Primary", "").lower() == "true"
             alias_type_id = alias.get("AliasTypeID")
@@ -378,14 +389,14 @@ class StrictOFACTransformer:
                     if not text:
                         continue
                     parts.append(text)
-                    name_attr = NAME_PART_MAP.get(part.get("NamePartTypeID", ""))
+                    name_attr = NAME_PART_MAP.get(part.get("NamePartTypeID", "")) if is_person else None
                     if name_attr and name_attr not in name_feature:
                         name_feature[name_attr] = text
 
                 if not parts:
                     continue
 
-                name_feature["NAME_FULL"] = " ".join(parts)
+                name_feature["NAME_FULL" if is_person else "NAME_ORG"] = " ".join(parts)
 
                 if is_primary:
                     name_feature["NAME_TYPE"] = "PRIMARY"
